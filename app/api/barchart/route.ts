@@ -71,7 +71,7 @@ export async function GET(request: Request) {
       limit: strikeLimit,
     };
 
-    const attempts = [
+    const attempts: Record<string, string>[] = [
       { baseSymbol: "$GCZ26", expirationDate: expiration },
       { baseSymbol: "GCZ26", expirationDate: expiration },
       { symbols: "IY6V26", expirationDate: expiration },
