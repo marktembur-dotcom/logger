@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
 const PAGE = "https://www.barchart.com/futures/quotes/GCZ26/volatility-greeks/IY6V26?futuresOptionsView=split";
+const COOKIE_PAGES = [
+  PAGE,
+  "https://www.barchart.com/futures/quotes/GCZ26/futures-prices",
+  "https://www.barchart.com/futures/quotes/GCZ26",
+];
 const API = "https://www.barchart.com/proxies/core-api/v1/options/get";
 const UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36";
 const fields = [
@@ -11,7 +16,6 @@ const fields = [
 ].join(",");
 
 function cookiesFrom(headers: Headers) {
-  const out: string[] = [];
   const h = headers as Headers & { getSetCookie?: () => string[] };
   const values = h.getSetCookie?.() ?? [];
   if (values.length) return values.map(x => x.split(";")[0]).join("; ");
@@ -20,9 +24,23 @@ function cookiesFrom(headers: Headers) {
   return "";
 }
 
-function tokenFrom(cookie: string) {
-  const m = cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
-  return m ? decodeURIComponent(m[1]) : "";
+function tokenFrom(cookie: string, html = "", headers?: Headers) {
+  const cookieMatch = cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);
+  if (cookieMatch) return decodeURIComponent(cookieMatch[1]);
+
+  const headerToken =
+    headers?.get("x-xsrf-token") ||
+    headers?.get("x-csrf-token") ||
+    "";
+
+  if (headerToken) return headerToken;
+
+  const meta =
+    html.match(/<meta[^>]+name=["']csrf-token["'][^>]+content=["']([^"']+)["']/i)?.[1] ||
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']csrf-token["']/i)?.[1] ||
+    "";
+
+  return meta ? decodeURIComponent(meta) : "";
 }
 
 async function barchart(params: URLSearchParams, cookie: string, token: string) {
@@ -33,9 +51,14 @@ async function barchart(params: URLSearchParams, cookie: string, token: string) 
       "cache-control": "no-cache",
       pragma: "no-cache",
       "x-xsrf-token": token,
+      "x-csrf-token": token,
       cookie,
       referer: PAGE,
+      origin: "https://www.barchart.com",
       "user-agent": UA,
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "same-origin",
     },
     cache: "no-store",
   });
@@ -51,14 +74,42 @@ export async function GET(request: Request) {
     const expiration = incoming.searchParams.get("expiration") || "nearest";
     const strikeLimit = incoming.searchParams.get("limit") || "80";
 
-    const page = await fetch(PAGE, {
-      headers: { "user-agent": UA, accept: "text/html,application/xhtml+xml" },
-      cache: "no-store",
-    });
-    const cookie = cookiesFrom(page.headers);
-    const token = tokenFrom(cookie);
-    if (!cookie || !token) {
-      return NextResponse.json({ live: false, error: "Barchart session token was not returned." }, { status: 502 });
+    let pageResponse: Response | null = null;
+    let pageHtml = "";
+    let cookie = "";
+    let token = "";
+
+    for (const pageUrl of COOKIE_PAGES) {
+      const response = await fetch(pageUrl, {
+        headers: {
+          "user-agent": UA,
+          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "accept-language": "en-US,en;q=0.9",
+          "cache-control": "no-cache",
+          pragma: "no-cache",
+          "upgrade-insecure-requests": "1",
+        },
+        cache: "no-store",
+      });
+
+      const html = await response.text();
+      const nextCookie = cookiesFrom(response.headers);
+      const nextToken = tokenFrom(nextCookie, html, response.headers);
+
+      if (nextCookie || nextToken) {
+        pageResponse = response;
+        pageHtml = html;
+        cookie = nextCookie;
+        token = nextToken;
+        if (cookie && token) break;
+      }
+    }
+
+    if (!pageResponse || !token) {
+      return NextResponse.json({
+        live: false,
+        error: "Barchart did not issue a usable web session token to the server.",
+      }, { status: 502 });
     }
 
     const common = {
@@ -74,7 +125,9 @@ export async function GET(request: Request) {
     const attempts: Record<string, string>[] = [
       { baseSymbol: "$GCZ26", expirationDate: expiration },
       { baseSymbol: "GCZ26", expirationDate: expiration },
+      { symbol: "GCZ26", expirationDate: expiration },
       { symbols: "IY6V26", expirationDate: expiration },
+      { symbols: "IY6V26" },
     ];
 
     let result: any = null;
