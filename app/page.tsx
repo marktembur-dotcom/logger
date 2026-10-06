@@ -23,7 +23,20 @@ export default function Home(){
  const [dte,setDte]=useState("0–3 DTE");
  const [auto,setAuto]=useState(true);
  const [selected,setSelected]=useState<Level|null>(demo[1]);
- const levels=useMemo(()=>dte==="0–1 DTE"?demo.filter(x=>x.dte<=1):dte==="2–3 DTE"?demo.filter(x=>x.dte>=2):demo,[dte]);
+ const [optionType,setOptionType]=useState("Tuesday Weekly Options");
+ const [expiration,setExpiration]=useState("Week 1: Oct 2026");
+ const [strikeRange,setStrikeRange]=useState("Near the Money");
+ const [chainLayout,setChainLayout]=useState("Stacked");
+ const visibleLevels=useMemo(()=>{
+   let rows=dte==="0–1 DTE"?demo.filter(x=>x.dte<=1):dte==="2–3 DTE"?demo.filter(x=>x.dte>=2):demo;
+   if(strikeRange==="Near the Money") rows=[...rows].sort((a,b)=>Math.abs(a.distance)-Math.abs(b.distance)).slice(0,3);
+   else if(strikeRange==="5 Strikes +/-") rows=rows.filter(x=>Math.abs(x.distance)<=6);
+   else if(strikeRange==="20 Strikes +/-") rows=rows.filter(x=>Math.abs(x.distance)<=24);
+   else if(strikeRange==="50 Strikes +/-") rows=rows.filter(x=>Math.abs(x.distance)<=50);
+   return rows;
+ },[dte,strikeRange]);
+ const levels=visibleLevels;
+ const expirationOptions=optionType==="Monthly Options"?["Week 1: Oct 2026","Week 2: Oct 2026","Week 3: Oct 2026","Week 1: Nov 2026"]:["Week 1: Oct 2026","Week 2: Oct 2026","Week 3: Oct 2026","Week 1: Nov 2026"];
 
  return <main>
   <header className="topbar">
@@ -45,11 +58,19 @@ export default function Home(){
    <div><span>ACTIVE DTE</span><b>1</b><small>DAYS</small></div>
   </div>
 
+  <section className="controlBar">
+   <div className="controlTitle"><span className="liveDot"/><div><b>BARCHART VIEW</b><small>Adjust the options map</small></div></div>
+   <label>OPTIONS TYPE<select value={optionType} onChange={e=>setOptionType(e.target.value)}>{["Monthly Options","Friday Weekly Options","Monday Weekly Options","Tuesday Weekly Options","Wednesday Weekly Options","Thursday Weekly Options"].map(x=><option key={x}>{x}</option>)}</select></label>
+   <label>EXPIRATION<select value={expiration} onChange={e=>setExpiration(e.target.value)}>{expirationOptions.map(x=><option key={x}>{x}</option>)}</select></label>
+   <label>STRIKES<select value={strikeRange} onChange={e=>setStrikeRange(e.target.value)}>{["5 Strikes +/-","Near the Money","20 Strikes +/-","50 Strikes +/-","Show All"].map(x=><option key={x}>{x}</option>)}</select></label>
+   <label>DISPLAY<select value={chainLayout} onChange={e=>setChainLayout(e.target.value)}><option>Stacked</option><option>Side-by-Side</option></select></label>
+  </section>
+
   <nav className="tabs">{["Levels","Option Chain","Skew Map","Method"].map(x=><button className={tab===x?"active":""} onClick={()=>setTab(x)} key={x}>{x}</button>)}</nav>
 
   {tab==="Levels" && <section className="grid">
    <div className="panel levelsPanel">
-    <div className="panelHead"><div><h2>Highest-conviction levels</h2><span>Nearest active strikes ranked in real time</span></div><select value={dte} onChange={e=>setDte(e.target.value)}><option>0–3 DTE</option><option>0–1 DTE</option><option>2–3 DTE</option></select></div>
+    <div className="panelHead"><div><h2>Highest-conviction levels</h2><span>{optionType} • {expiration} • {strikeRange}</span></div><select value={dte} onChange={e=>setDte(e.target.value)}><option>0–3 DTE</option><option>0–1 DTE</option><option>2–3 DTE</option></select></div>
     <div className="table">
      <div className="tr th"><span>RANK</span><span>STRIKE</span><span>SCORE</span><span>GAMMA</span><span>DELTA</span><span>IV SKEW</span><span>OI</span><span>DTE</span></div>
      {levels.map((x,i)=><button className={selected?.strike===x.strike?"tr row selected":"tr row"} onClick={()=>setSelected(x)} key={x.strike}>
@@ -69,7 +90,7 @@ export default function Home(){
    </aside>
   </section>}
 
-  {tab==="Option Chain" && <section className="panel full"><div className="panelHead"><div><h2>Short-dated option chain</h2><span>Calls and puts around the current GC price</span></div></div><div className="chain">{levels.map(x=><div className="chainRow" key={x.strike}><span>{x.strike}</span><span>{x.callIv.toFixed(1)}%</span><span>{x.delta.toFixed(2)}</span><span>{x.gamma.toFixed(4)}</span><span>{x.putIv.toFixed(1)}%</span><span>{x.oi.toLocaleString()}</span><span>{x.volume.toLocaleString()}</span></div>)}</div></section>}
+  {tab==="Option Chain" && <section className="panel full"><div className="panelHead"><div><h2>Short-dated option chain</h2><span>{optionType} • {expiration} • {strikeRange}</span></div><div className="chainMode">{chainLayout}</div></div><div className={"chain "+(chainLayout==="Side-by-Side"?"sideBySide":"stacked")}>{levels.map(x=><div className="chainRow" key={x.strike}><span>{x.strike}</span><span>{x.callIv.toFixed(1)}%</span><span>{x.delta.toFixed(2)}</span><span>{x.gamma.toFixed(4)}</span><span>{x.putIv.toFixed(1)}%</span><span>{x.oi.toLocaleString()}</span><span>{x.volume.toLocaleString()}</span></div>)}</div></section>}
   {tab==="Skew Map" && <section className="panel full"><div className="skewHero"><div><div className="eyebrow">VOLATILITY SIGNAL</div><h2>Put protection is leading</h2><p>Across the active short-dated strikes, put IV is trading above call IV. That signal is fed into the level score rather than used alone.</p></div><div className="skewNumber">+1.6<span>VOL PTS</span></div></div></section>}
   {tab==="Method" && <section className="panel full"><div className="method"><h2>How the engine ranks a level</h2><div className="methodGrid">{[["01","Gamma","Higher gamma = stronger acceleration / reaction potential."],["02","ATM / Delta","Near-price strikes with delta near 0.50 get priority."],["03","IV Skew","Put vs call IV identifies protection / fear imbalance."],["04","DTE","0–2 DTE gets the strongest short-dated weighting."],["05","Activity","Open interest, volume and fresh trading keep levels alive."],["06","Distance","Levels beyond ~20–30 points lose priority for short-dated setups."]].map(a=><div><span>{a[0]}</span><b>{a[1]}</b><p>{a[2]}</p></div>)}</div></div></section>}
 
