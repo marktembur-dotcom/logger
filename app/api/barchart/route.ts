@@ -43,6 +43,86 @@ function tokenFrom(cookie: string, html = "", headers?: Headers) {
   return meta ? decodeURIComponent(meta) : "";
 }
 
+
+async function barchartOnDemand(contract: string, limit: number) {
+  const apikey = process.env.BARCHART_API_KEY;
+  if (!apikey) return null;
+
+  const endpoint = "https://ondemand.websol.barchart.com/getFuturesOptions.json";
+  const fieldsOD = [
+    "openInterest","impliedVolatility","delta","gamma","theta","vega",
+    "open","high","low","last","previousClose","change","percentChange","volume","premium"
+  ].join(",");
+
+  const params = new URLSearchParams({
+    apikey,
+    root: "GC",
+    contract,
+    exchange: "COMEX",
+    fields: fieldsOD,
+  });
+
+  const response = await fetch(endpoint + "?" + params.toString(), {
+    headers: { accept: "application/json" },
+    cache: "no-store",
+  });
+  const json: any = await response.json().catch(() => null);
+
+  if (!response.ok || json?.status?.code !== 200 || !Array.isArray(json?.results)) {
+    return {
+      live: false,
+      status: response.status,
+      error: json?.status?.message || "Barchart OnDemand returned no options data.",
+    };
+  }
+
+  const quoteParams = new URLSearchParams({
+    apikey,
+    symbols: contract,
+    fields: "lastPrice,tradeTimestamp",
+  });
+  const quoteResponse = await fetch(
+    "https://ondemand.websol.barchart.com/getQuote.json?" + quoteParams.toString(),
+    { headers: { accept: "application/json" }, cache: "no-store" }
+  );
+  const quoteJson: any = await quoteResponse.json().catch(() => null);
+  const baseLast = Number(quoteJson?.results?.[0]?.lastPrice) || 0;
+
+  const today = new Date();
+  const rows = json.results.slice(0, Math.max(limit, 1000)).map((r: any) => {
+    const expiry = r.expirationDate ? new Date(r.expirationDate + "T23:59:59Z") : null;
+    const dte = expiry ? Math.max(0, Math.ceil((expiry.getTime() - today.getTime()) / 86400000)) : 0;
+    return {
+      symbol: r.longSymbol || r.symbol,
+      type: r.type,
+      strike: Number(r.strike) || 0,
+      bid: 0,
+      ask: 0,
+      last: Number(r.last) || 0,
+      volume: Number(r.volume) || 0,
+      openInterest: Number(r.openInterest) || 0,
+      iv: Number(r.impliedVolatility) || 0,
+      delta: Number(r.delta) || 0,
+      gamma: Number(r.gamma) || 0,
+      theta: Number(r.theta) || 0,
+      vega: Number(r.vega) || 0,
+      dte,
+      expiration: r.expirationDate,
+      tradeTime: r.date,
+      percentFromLast: baseLast && r.strike ? ((Number(r.strike) - baseLast) / baseLast) * 100 : 0,
+      baseLast,
+    };
+  });
+
+  return {
+    live: true,
+    source: "Barchart OnDemand",
+    fetchedAt: new Date().toISOString(),
+    contract,
+    rows,
+  };
+}
+
 async function barchart(params: URLSearchParams, cookie: string, token: string) {
   const r = await fetch(API + "?" + params.toString(), {
     headers: {
@@ -73,6 +153,17 @@ export async function GET(request: Request) {
     const incoming = new URL(request.url);
     const expiration = incoming.searchParams.get("expiration") || "nearest";
     const strikeLimit = incoming.searchParams.get("limit") || "80";
+    const contract = incoming.searchParams.get("contract") || process.env.BARCHART_CONTRACT || "GCZ26";
+
+    const apiData = await barchartOnDemand(contract, Number(strikeLimit) || 80);
+    if (apiData?.live) {
+      return NextResponse.json(apiData, {
+        headers: { "Cache-Control": "no-store, max-age=0" },
+      });
+    }
+    if (process.env.BARCHART_API_KEY && apiData && !apiData.live) {
+      return NextResponse.json(apiData, { status: 502 });
+    }
 
     let pageResponse: Response | null = null;
     let pageHtml = "";
