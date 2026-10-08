@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 type NodeLink = { label: string; value: string; tone?: "cyan" | "green" | "amber" | "red" | "muted" };
 
+/** Rectangular particle field — fills the panel (no round donut / wasted corners). */
 export default function NeuralShell({
   nodes = [],
   title = "NEURAL SHELL",
@@ -39,87 +40,105 @@ export default function NeuralShell({
     resize();
     window.addEventListener("resize", resize);
 
-    // Smaller torus so it fits without clipping
-    const R = 90;
-    const r = 36;
-    const segsU = 80;
-    const segsV = 32;
-
-    const points: { u: number; v: number; phase: number }[] = [];
-    for (let i = 0; i < segsU; i++) {
-      for (let j = 0; j < segsV; j++) {
-        if ((i + j) % 2 === 0) continue;
-        points.push({
-          u: (i / segsU) * Math.PI * 2,
-          v: (j / segsV) * Math.PI * 2,
+    type P = { x: number; y: number; z: number; phase: number; speed: number };
+    const pts: P[] = [];
+    const cols = 28;
+    const rows = 14;
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < rows; j++) {
+        pts.push({
+          x: (i / (cols - 1)) * 2 - 1,
+          y: (j / (rows - 1)) * 2 - 1,
+          z: Math.random() * 2 - 1,
           phase: Math.random() * Math.PI * 2,
+          speed: 0.4 + Math.random() * 0.8,
         });
       }
     }
 
-    const project = (x: number, y: number, z: number, w: number, h: number) => {
-      const f = 380 / (380 + z);
-      return { x: w / 2 + x * f, y: h / 2 + y * f * 0.9, s: f };
-    };
-
     const draw = () => {
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
-      t += 0.008;
+      t += 0.012;
       ctx.clearRect(0, 0, w, h);
 
-      const g = ctx.createRadialGradient(w / 2, h / 2, 10, w / 2, h / 2, Math.max(w, h) * 0.42);
-      g.addColorStop(0, "rgba(57,255,182,0.1)");
-      g.addColorStop(0.5, "rgba(20,80,100,0.04)");
-      g.addColorStop(1, "rgba(0,0,0,0)");
+      // soft rectangular glow
+      const g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, "rgba(57,255,182,0.06)");
+      g.addColorStop(0.5, "rgba(94,200,255,0.04)");
+      g.addColorStop(1, "rgba(255,77,154,0.05)");
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
 
-      const rotY = t * 0.55;
-      const rotX = 0.5 + Math.sin(t * 0.3) * 0.08;
+      const padX = w * 0.06;
+      const padY = h * 0.1;
+      const bw = w - padX * 2;
+      const bh = h - padY * 2;
 
-      // scale torus to fit height
-      const fit = Math.min(w, h) / 280;
-
-      for (let k = 0; k < 12; k++) {
-        const a = (k / 12) * Math.PI * 2 + t * 0.2;
-        const len = (120 + Math.sin(t + k) * 20) * fit;
+      // grid lines
+      ctx.strokeStyle = "rgba(57,255,182,0.06)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 8; i++) {
+        const x = padX + (bw * i) / 8;
         ctx.beginPath();
-        ctx.moveTo(w / 2 + Math.cos(a) * 12, h / 2 + Math.sin(a) * 8);
-        ctx.lineTo(w / 2 + Math.cos(a) * len, h / 2 + Math.sin(a) * len * 0.5);
-        ctx.strokeStyle = `rgba(57,255,182,${0.03 + (k % 3) * 0.015})`;
-        ctx.lineWidth = 1;
+        ctx.moveTo(x, padY);
+        ctx.lineTo(x, padY + bh);
+        ctx.stroke();
+      }
+      for (let j = 0; j <= 4; j++) {
+        const y = padY + (bh * j) / 4;
+        ctx.beginPath();
+        ctx.moveTo(padX, y);
+        ctx.lineTo(padX + bw, y);
         ctx.stroke();
       }
 
-      for (const p of points) {
-        const uu = p.u + rotY;
-        const vv = p.v + t * 0.35;
-        let x = (R + r * Math.cos(vv)) * Math.cos(uu) * fit;
-        let y = (R + r * Math.cos(vv)) * Math.sin(uu) * fit;
-        let z = r * Math.sin(vv) * fit;
+      // border frame
+      ctx.strokeStyle = "rgba(57,255,182,0.2)";
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(padX, padY, bw, bh);
 
-        const y2 = y * Math.cos(rotX) - z * Math.sin(rotX);
-        const z2 = y * Math.sin(rotX) + z * Math.cos(rotX);
-        y = y2;
-        z = z2;
+      // particles + links in rectangular field
+      const projected: { x: number; y: number; a: number; s: number }[] = [];
+      for (const p of pts) {
+        const wave = Math.sin(t * p.speed + p.phase + p.x * 2) * 0.12;
+        const wave2 = Math.cos(t * p.speed * 0.7 + p.y * 3) * 0.08;
+        const px = padX + ((p.x + 1) / 2) * bw;
+        const py = padY + ((p.y + 1) / 2) * bh + wave * bh * 0.15;
+        const depth = 0.35 + 0.65 * ((p.z + 1) / 2 + wave2);
+        const pulse = 0.5 + 0.5 * Math.sin(t * 2 + p.phase);
+        projected.push({ x: px, y: py, a: depth * pulse, s: 1.2 + depth * 2.2 * pulse });
+      }
 
-        const pr = project(x, y, z + 30, w, h);
-        const pulse = 0.45 + 0.55 * Math.sin(t * 2 + p.phase);
-        const depth = Math.max(0.15, Math.min(1, pr.s));
-        const size = 1 + depth * 1.6 * pulse;
+      // light connections between near neighbors
+      for (let i = 0; i < projected.length; i++) {
+        const a = projected[i];
+        for (let j = i + 1; j < Math.min(i + 6, projected.length); j++) {
+          const b = projected[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const d = Math.hypot(dx, dy);
+          if (d < 48) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(57,255,182,${0.04 + (1 - d / 48) * 0.08})`;
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
+      }
 
+      for (const p of projected) {
         ctx.beginPath();
-        ctx.fillStyle = z > 0 ? `rgba(57,255,182,${0.25 + depth * 0.55})` : `rgba(94,180,230,${0.2 + depth * 0.45})`;
-        ctx.arc(pr.x, pr.y, size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(57,255,182,${0.2 + p.a * 0.55})`;
+        ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      ctx.beginPath();
-      ctx.strokeStyle = "rgba(57,255,182,0.2)";
-      ctx.lineWidth = 1.5;
-      ctx.ellipse(w / 2, h / 2, 40 * fit, 16 * fit, 0, 0, Math.PI * 2);
-      ctx.stroke();
+      // scanning bar
+      const scanX = padX + ((t * 40) % bw);
+      ctx.fillStyle = "rgba(57,255,182,0.04)";
+      ctx.fillRect(scanX - 12, padY, 24, bh);
 
       raf = requestAnimationFrame(draw);
     };
@@ -138,7 +157,7 @@ export default function NeuralShell({
           <b>{title}</b>
           <small>{subtitle}</small>
         </div>
-        <span className="neuralBadge">LIVE GRAPH</span>
+        <span className="neuralBadge">LIVE FIELD</span>
       </div>
       <div className="neuralStage">
         <canvas ref={ref} />
