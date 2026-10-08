@@ -39,10 +39,11 @@ export default function NeuralShell({
     resize();
     window.addEventListener("resize", resize);
 
-    const R = 118;
-    const r = 48;
-    const segsU = 90;
-    const segsV = 36;
+    // Smaller torus so it fits without clipping
+    const R = 90;
+    const r = 36;
+    const segsU = 80;
+    const segsV = 32;
 
     const points: { u: number; v: number; phase: number }[] = [];
     for (let i = 0; i < segsU; i++) {
@@ -57,8 +58,8 @@ export default function NeuralShell({
     }
 
     const project = (x: number, y: number, z: number, w: number, h: number) => {
-      const f = 420 / (420 + z);
-      return { x: w / 2 + x * f, y: h / 2 + y * f * 0.92, s: f };
+      const f = 380 / (380 + z);
+      return { x: w / 2 + x * f, y: h / 2 + y * f * 0.9, s: f };
     };
 
     const draw = () => {
@@ -67,70 +68,57 @@ export default function NeuralShell({
       t += 0.008;
       ctx.clearRect(0, 0, w, h);
 
-      // soft glow background
-      const g = ctx.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, Math.max(w, h) * 0.45);
-      g.addColorStop(0, "rgba(40,120,140,0.12)");
-      g.addColorStop(0.5, "rgba(20,60,90,0.05)");
+      const g = ctx.createRadialGradient(w / 2, h / 2, 10, w / 2, h / 2, Math.max(w, h) * 0.42);
+      g.addColorStop(0, "rgba(57,255,182,0.1)");
+      g.addColorStop(0.5, "rgba(20,80,100,0.04)");
       g.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
 
       const rotY = t * 0.55;
-      const rotX = 0.55 + Math.sin(t * 0.3) * 0.08;
+      const rotX = 0.5 + Math.sin(t * 0.3) * 0.08;
 
-      // spokes from center outward
-      for (let k = 0; k < 14; k++) {
-        const a = (k / 14) * Math.PI * 2 + t * 0.2;
-        const len = 160 + Math.sin(t + k) * 30;
-        const x1 = Math.cos(a) * 20;
-        const y1 = Math.sin(a) * 12;
-        const x2 = Math.cos(a) * len;
-        const y2 = Math.sin(a) * len * 0.55;
+      // scale torus to fit height
+      const fit = Math.min(w, h) / 280;
+
+      for (let k = 0; k < 12; k++) {
+        const a = (k / 12) * Math.PI * 2 + t * 0.2;
+        const len = (120 + Math.sin(t + k) * 20) * fit;
         ctx.beginPath();
-        ctx.moveTo(w / 2 + x1, h / 2 + y1);
-        ctx.lineTo(w / 2 + x2, h / 2 + y2);
-        ctx.strokeStyle = `rgba(98,230,225,${0.04 + (k % 3) * 0.02})`;
+        ctx.moveTo(w / 2 + Math.cos(a) * 12, h / 2 + Math.sin(a) * 8);
+        ctx.lineTo(w / 2 + Math.cos(a) * len, h / 2 + Math.sin(a) * len * 0.5);
+        ctx.strokeStyle = `rgba(57,255,182,${0.03 + (k % 3) * 0.015})`;
         ctx.lineWidth = 1;
         ctx.stroke();
       }
 
-      // torus particles
       for (const p of points) {
         const uu = p.u + rotY;
         const vv = p.v + t * 0.35;
-        let x = (R + r * Math.cos(vv)) * Math.cos(uu);
-        let y = (R + r * Math.cos(vv)) * Math.sin(uu);
-        let z = r * Math.sin(vv);
+        let x = (R + r * Math.cos(vv)) * Math.cos(uu) * fit;
+        let y = (R + r * Math.cos(vv)) * Math.sin(uu) * fit;
+        let z = r * Math.sin(vv) * fit;
 
-        // rotate X
         const y2 = y * Math.cos(rotX) - z * Math.sin(rotX);
         const z2 = y * Math.sin(rotX) + z * Math.cos(rotX);
         y = y2;
         z = z2;
 
-        const pr = project(x, y, z + 40, w, h);
+        const pr = project(x, y, z + 30, w, h);
         const pulse = 0.45 + 0.55 * Math.sin(t * 2 + p.phase);
         const depth = Math.max(0.15, Math.min(1, pr.s));
-        const size = 1.1 + depth * 1.8 * pulse;
+        const size = 1 + depth * 1.6 * pulse;
 
-        const hue = z > 0 ? "98,230,225" : "94,180,230";
         ctx.beginPath();
-        ctx.fillStyle = `rgba(${hue},${0.25 + depth * 0.55})`;
+        ctx.fillStyle = z > 0 ? `rgba(57,255,182,${0.25 + depth * 0.55})` : `rgba(94,180,230,${0.2 + depth * 0.45})`;
         ctx.arc(pr.x, pr.y, size, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // inner ring
       ctx.beginPath();
-      ctx.strokeStyle = "rgba(98,230,225,0.18)";
+      ctx.strokeStyle = "rgba(57,255,182,0.2)";
       ctx.lineWidth = 1.5;
-      ctx.ellipse(w / 2, h / 2, 52, 22, 0, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.strokeStyle = "rgba(255,255,255,0.06)";
-      ctx.lineWidth = 1;
-      ctx.ellipse(w / 2, h / 2, 140, 58, 0, 0, Math.PI * 2);
+      ctx.ellipse(w / 2, h / 2, 40 * fit, 16 * fit, 0, 0, Math.PI * 2);
       ctx.stroke();
 
       raf = requestAnimationFrame(draw);
