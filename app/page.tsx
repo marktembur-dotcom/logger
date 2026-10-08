@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BarchartCsvImport from "./components/BarchartCsvImport";
 import NeuralShell from "./components/NeuralShell";
 import DataFlowTree from "./components/DataFlowTree";
@@ -23,7 +23,7 @@ type Mt5Event = {
 };
 
 const empty = { live: false, rows: [] as Row[], error: "" };
-const THEMES = ["cyan", "emerald", "violet", "amber", "ice"] as const;
+const THEMES = ["neon", "cyan", "emerald", "violet", "amber", "ice"] as const;
 type ThemeName = (typeof THEMES)[number] | "custom";
 
 function scoreRow(c: Row, p: Row, price: number): Level {
@@ -91,7 +91,7 @@ function FeedMini({ title, feed }: { title: string; feed?: Mt5Event }) {
 }
 
 const defaultCustom = {
-  c1: "#4ef0e2", c2: "#5dff9f", c3: "#5aa8ff", c4: "#ffc857", c5: "#ff5d7a", c6: "#c78bff",
+  c1: "#39ffb6", c2: "#7dff6a", c3: "#5ec8ff", c4: "#ffe566", c5: "#ff4d9a", c6: "#c77dff",
 };
 
 export default function Home() {
@@ -103,7 +103,7 @@ export default function Home() {
   }>({ live: false, feeds: {}, events: [] });
   const [now, setNow] = useState(() => new Date());
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [theme, setTheme] = useState<ThemeName>("cyan");
+  const [theme, setTheme] = useState<ThemeName>("neon");
   const [custom, setCustom] = useState(defaultCustom);
 
   useEffect(() => {
@@ -275,6 +275,7 @@ export default function Home() {
   const utc = now.toISOString().slice(11, 19) + " UTC";
 
   const themeColors: Record<string, string> = {
+    neon: "linear-gradient(135deg,#0a1814 0%,#0a1520 40%,#1a0a18 100%)",
     cyan: "linear-gradient(135deg,#0a1520,#123040)",
     emerald: "linear-gradient(135deg,#0a1812,#0d2820)",
     violet: "linear-gradient(135deg,#120e1c,#1a1430)",
@@ -574,7 +575,7 @@ export default function Home() {
               <button className="iconBtn" type="button" onClick={() => setSettingsOpen(false)}>CLOSE</button>
             </div>
             <div className="settingsBody">
-              <label>PRESETS (MULTI-COLOR BLENDS)</label>
+              <label>PRESETS — MULTI-COLOR NEON BLENDS</label>
               <div className="themeGrid">
                 {THEMES.map((t) => (
                   <button
@@ -589,11 +590,11 @@ export default function Home() {
                 ))}
               </div>
 
-              <label>CUSTOM BLEND (6 ACCENT COLORS)</label>
+              <label>CUSTOM BLEND (6 ACCENTS — MIX FREELY)</label>
               <div className="colorRow">
                 {(["c1", "c2", "c3", "c4", "c5", "c6"] as const).map((key) => (
                   <div key={key}>
-                    <span style={{ fontSize: 7, color: "var(--muted)" }}>{key.toUpperCase()}</span>
+                    <span style={{ fontSize: 9, color: "var(--muted)" }}>{key.toUpperCase()}</span>
                     <input
                       type="color"
                       value={custom[key]}
@@ -611,11 +612,11 @@ export default function Home() {
                   className="ghost"
                   type="button"
                   onClick={() => {
-                    setTheme("cyan");
+                    setTheme("neon");
                     setCustom(defaultCustom);
                   }}
                 >
-                  RESET
+                  RESET NEON
                 </button>
                 <button className="primary" type="button" onClick={() => setSettingsOpen(false)}>
                   APPLY
