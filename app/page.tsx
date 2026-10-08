@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import BarchartCsvImport from "./components/BarchartCsvImport";
 
 type Row = { symbol:string; type:string; strike:number; bid:number; ask:number; last:number; volume:number; openInterest:number; iv:number; delta:number; gamma:number; theta:number; vega:number; dte:number; expiration:string; tradeTime:string; percentFromLast:number; baseLast:number; };
@@ -25,10 +25,11 @@ function fmt(n:number,d=1){return Number(n||0).toLocaleString(undefined,{maximum
 
 export default function Home(){
  const [data,setData]=useState<any>(empty); const [tab,setTab]=useState("Levels"); const [selected,setSelected]=useState<Level|null>(null);
- useEffect(()=>{const h=(e:any)=>{const rows=e.detail?.rows||[]; if(rows.length){setData({live:true,source:"Barchart CSV Download",fetchedAt:new Date().toISOString(),rows,error:""});setSelected(null);}}; window.addEventListener("barchart-csv",h); return()=>window.removeEventListener("barchart-csv",h)},[]);
+ const csvImportedRef=useRef(false);
  const [strikeRange,setStrikeRange]=useState("Near the Money"); const [layout,setLayout]=useState("Stacked"); const [refresh,setRefresh]=useState(true);
- async function load(){try{const r=await fetch("/api/barchart?limit=100",{cache:"no-store"}); const j=await r.json(); setData(j); if(!j.live) setSelected(null);}catch(e){setData({live:false,rows:[],error:"Unable to reach Barchart adapter."});}}
- useEffect(()=>{load(); if(!refresh)return; const id=setInterval(load,30000); return()=>clearInterval(id)},[refresh]);
+ useEffect(()=>{const h=(e:any)=>{const rows=e.detail?.rows||[]; if(rows.length){csvImportedRef.current=true; setData({live:true,source:"Barchart CSV Download",fetchedAt:new Date().toISOString(),rows,error:""});setSelected(null);setRefresh(false);}}; window.addEventListener("barchart-csv",h); return()=>window.removeEventListener("barchart-csv",h)},[]);
+ async function load(force=false){if(csvImportedRef.current&&!force)return;try{const r=await fetch("/api/barchart?limit=100",{cache:"no-store"}); const j=await r.json(); setData(j); if(!j.live) setSelected(null);}catch(e){setData({live:false,rows:[],error:"Unable to reach Barchart adapter."});}}
+ useEffect(()=>{if(!csvImportedRef.current) load(); if(!refresh)return; const id=setInterval(()=>load(),30000); return()=>clearInterval(id)},[refresh]);
  const rows:Row[]=data.rows||[];
  const price=rows.find(x=>x.baseLast)?.baseLast||0;
  const calls=rows.filter(x=>x.type.toLowerCase()==="call"), puts=rows.filter(x=>x.type.toLowerCase()==="put");
@@ -38,8 +39,8 @@ export default function Home(){
  const putSkew=atm?atm.putIv-atm.callIv:0;
  const maxGamma=Math.max(...visible.map(x=>x.gamma),0.000001);
  return <main>
-  <header className="topbar"><div className="brand"><div className="mark">GC</div><div><div className="brandTitle">COMMAND CENTER</div><div className="brandSub">BARCHART GOLD OPTIONS</div></div></div><div className="market"><span className={data.live?"liveDot":"liveDot off"}/><span>COMEX / GC</span><strong>{price?fmt(price,2):"—"}</strong><span className={data.live?"up":"warn"}>{data.live?"LIVE BARCHART":"OFFLINE"}</span></div><div className="topActions"><button className="ghost" onClick={load}>Refresh</button><button className="primary" onClick={()=>setTab("Levels")}>Trade Setup</button></div></header>
-  <section className="hero"><div><div className="eyebrow">SHORT-DATED OPTIONS MAP</div><h1>Gold reaction levels</h1><p>Actual Barchart figures — ranked by gamma, proximity, skew, DTE and activity.</p></div><div className="statusCard"><div><span className={data.live?"liveDot":"liveDot off"}/><b>{data.live?"LIVE ENGINE":"BARCHART OFFLINE"}</b></div><small>{data.live?"Session data refreshed every 30 seconds":"No demo fallback. Actual data only."}</small><button onClick={()=>setRefresh(!refresh)}>{refresh?"Pause refresh":"Resume refresh"}</button></div></section>
+  <header className="topbar"><div className="brand"><div className="mark">GC</div><div><div className="brandTitle">COMMAND CENTER</div><div className="brandSub">BARCHART GOLD OPTIONS</div></div></div><div className="market"><span className={data.live?"liveDot":"liveDot off"}/><span>COMEX / GC</span><strong>{price?fmt(price,2):"—"}</strong><span className={data.live?"up":"warn"}>{data.live?"LIVE BARCHART":"OFFLINE"}</span></div><div className="topActions"><button className="ghost" onClick={()=>{csvImportedRef.current=false;setRefresh(true);load(true)}}>Refresh Barchart</button><button className="primary" onClick={()=>setTab("Levels")}>Trade Setup</button></div></header>
+  <section className="hero"><div><div className="eyebrow">SHORT-DATED OPTIONS MAP</div><h1>Gold reaction levels</h1><p>Actual Barchart figures — ranked by gamma, proximity, skew, DTE and activity.</p></div><div className="statusCard"><div><span className={data.live?"liveDot":"liveDot off"}/><b>{data.live?"LIVE ENGINE":"BARCHART OFFLINE"}</b></div><small>{data.live?"Session data refreshed every 30 seconds":"No demo fallback. Actual data only."}</small><button onClick={()=>{if(csvImportedRef.current){csvImportedRef.current=false;setRefresh(true);load(true)}else setRefresh(!refresh)}}>{csvImportedRef.current?"Resume Barchart live":refresh?"Pause refresh":"Resume refresh"}</button></div></section>
   <BarchartCsvImport />
   {!data.live&&<div className="errorBanner">{data.error||"Waiting for Barchart data…"}</div>}
   <div className="ticker"><div><span>GC</span><b>{price?fmt(price,2):"—"}</b><small>FUTURES</small></div><div><span>ATM IV</span><b>{atm?fmt((atm.callIv+atm.putIv)/2,2)+"%":"—"}</b><small>NEAREST STRIKE</small></div><div><span>PUT SKEW</span><b className="warn">{atm?fmt(putSkew,2):"—"}</b><small>VOL POINTS</small></div><div><span>TOP GAMMA</span><b>{top?fmt(top.strike,0):"—"}</b><small>STRIKE</small></div><div><span>ACTIVE DTE</span><b>{top?.dte??"—"}</b><small>DAYS</small></div></div>
