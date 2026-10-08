@@ -45,6 +45,10 @@ export function getMt5State(): Mt5State {
   return store();
 }
 
+/**
+ * Latest signal per source stays until the next post for that same source replaces it.
+ * Events are kept in a longer ring buffer (server memory until DB is added).
+ */
 export function ingestMt5Event(
   raw: Omit<Mt5Event, "id" | "receivedAt"> & { id?: string }
 ): Mt5Event {
@@ -54,7 +58,8 @@ export function ingestMt5Event(
     receivedAt: new Date().toISOString(),
   };
   const s = store();
+  // Sticky per-source feed: only replaced when a new notification arrives for that source
   s.feeds[event.source] = event;
-  s.events = [event, ...s.events].slice(0, 80);
+  s.events = [event, ...s.events].slice(0, 200);
   return event;
 }
