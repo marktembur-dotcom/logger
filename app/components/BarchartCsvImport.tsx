@@ -113,7 +113,7 @@ export default function BarchartCsvImport(){
     reader.readAsText(file);
   }
   return <div className="importBox">
-    <div><b>BARCHART CSV</b><small>Use Barchart's own Download button — no scraping.</small></div>
+    <div><b>BARCHART CSV</b><small>Use Barchart’s own Download button — import the file directly into this dashboard.</small></div>
     <div className="importActions"><button className="ghost" onClick={open}>Open Barchart</button><button className="primary" onClick={choose}>Import Downloaded CSV</button><input ref={input} type="file" accept=".csv,text/csv" hidden onChange={e=>{const file=e.target.files?.[0];if(file)read(file);e.currentTarget.value="";}}/></div>
     {msg&&<span className="importMsg">{msg}</span>}
   </div>;
