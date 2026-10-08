@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import BarchartCsvImport from "./components/BarchartCsvImport";
 import NeuralShell from "./components/NeuralShell";
+import DataFlowTree from "./components/DataFlowTree";
 
 type Row = {
   symbol: string; type: string; strike: number; bid: number; ask: number; last: number;
@@ -22,6 +23,8 @@ type Mt5Event = {
 };
 
 const empty = { live: false, rows: [] as Row[], error: "" };
+const THEMES = ["cyan", "emerald", "violet", "amber", "ice"] as const;
+type ThemeName = (typeof THEMES)[number] | "custom";
 
 function scoreRow(c: Row, p: Row, price: number): Level {
   const dte = Math.max(c.dte || p.dte, 0);
@@ -34,24 +37,12 @@ function scoreRow(c: Row, p: Row, price: number): Level {
   const g = Math.min(1, gamma / (Math.max(c.gamma, p.gamma) || 1));
   const dteScore = dte <= 2 ? 1 : dte <= 3 ? 0.75 : dte <= 7 ? 0.35 : 0;
   const raw =
-    30 * g +
-    20 * atm +
-    15 * Math.min(1, Math.max(0, skew / 5)) +
-    15 * dteScore +
-    10 * Math.min(1, activity / 5) +
-    10 * dist;
+    30 * g + 20 * atm + 15 * Math.min(1, Math.max(0, skew / 5)) + 15 * dteScore +
+    10 * Math.min(1, activity / 5) + 10 * dist;
   return {
-    strike: c.strike,
-    score: Math.round(raw),
-    gamma,
-    delta: Math.abs(c.delta),
-    callIv: c.iv,
-    putIv: p.iv,
-    dte,
-    oi: Math.max(c.openInterest, p.openInterest),
-    volume: Math.max(c.volume, p.volume),
-    distance,
-    side: skew >= 0 ? "PUT" : "CALL",
+    strike: c.strike, score: Math.round(raw), gamma, delta: Math.abs(c.delta),
+    callIv: c.iv, putIv: p.iv, dte, oi: Math.max(c.openInterest, p.openInterest),
+    volume: Math.max(c.volume, p.volume), distance, side: skew >= 0 ? "PUT" : "CALL",
     label: gamma === c.gamma ? "Gamma Reaction" : "Gamma Zone",
   };
 }
@@ -99,22 +90,52 @@ function FeedMini({ title, feed }: { title: string; feed?: Mt5Event }) {
   );
 }
 
+const defaultCustom = {
+  c1: "#4ef0e2", c2: "#5dff9f", c3: "#5aa8ff", c4: "#ffc857", c5: "#ff5d7a", c6: "#c78bff",
+};
+
 export default function Home() {
   const [data, setData] = useState<any>(empty);
-  const csvImportedRef = useRef(false);
   const [mt5, setMt5] = useState<{
     live: boolean;
     feeds: Partial<Record<string, Mt5Event>>;
     events: Mt5Event[];
-    fetchedAt?: string;
   }>({ live: false, feeds: {}, events: [] });
   const [now, setNow] = useState(() => new Date());
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [theme, setTheme] = useState<ThemeName>("cyan");
+  const [custom, setCustom] = useState(defaultCustom);
+
+  useEffect(() => {
+    try {
+      const t = localStorage.getItem("gc-theme") as ThemeName | null;
+      const c = localStorage.getItem("gc-custom");
+      if (t) setTheme(t);
+      if (c) setCustom({ ...defaultCustom, ...JSON.parse(c) });
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    if (theme === "custom") {
+      const root = document.documentElement.style;
+      root.setProperty("--custom-c1", custom.c1);
+      root.setProperty("--custom-c2", custom.c2);
+      root.setProperty("--custom-c3", custom.c3);
+      root.setProperty("--custom-c4", custom.c4);
+      root.setProperty("--custom-c5", custom.c5);
+      root.setProperty("--custom-c6", custom.c6);
+    }
+    try {
+      localStorage.setItem("gc-theme", theme);
+      localStorage.setItem("gc-custom", JSON.stringify(custom));
+    } catch {}
+  }, [theme, custom]);
 
   useEffect(() => {
     const h = (e: any) => {
       const rows = e.detail?.rows || [];
       if (rows.length) {
-        csvImportedRef.current = true;
         setData({
           live: true,
           source: "Barchart CSV Download",
@@ -135,12 +156,7 @@ export default function Home() {
         const r = await fetch("/api/mt5/state", { cache: "no-store" });
         const j = await r.json();
         if (!stop && j?.ok)
-          setMt5({
-            live: !!j.live,
-            feeds: j.feeds || {},
-            events: j.events || [],
-            fetchedAt: j.fetchedAt,
-          });
+          setMt5({ live: !!j.live, feeds: j.feeds || {}, events: j.events || [] });
       } catch {}
     };
     pull();
@@ -158,10 +174,7 @@ export default function Home() {
 
   const rows: Row[] = data.rows || [];
   const mt5Price =
-    mt5.feeds.XAU5?.price ||
-    mt5.feeds.XAU1?.price ||
-    mt5.feeds.WIN?.price ||
-    0;
+    mt5.feeds.XAU5?.price || mt5.feeds.XAU1?.price || mt5.feeds.WIN?.price || 0;
   const price = rows.find((x) => x.baseLast)?.baseLast || mt5Price || 0;
   const calls = rows.filter((x) => x.type.toLowerCase() === "call");
   const puts = rows.filter((x) => x.type.toLowerCase() === "put");
@@ -198,11 +211,7 @@ export default function Home() {
   const earlyN = mt5.events.filter((e) => e.tier === "early").length;
 
   const latest =
-    mt5.events[0] ||
-    mt5.feeds.XAU5 ||
-    mt5.feeds.XAU1 ||
-    mt5.feeds.WIN ||
-    null;
+    mt5.events[0] || mt5.feeds.XAU5 || mt5.feeds.XAU1 || mt5.feeds.WIN || null;
 
   const lastLatency = latest
     ? Math.max(0, Date.now() - new Date(latest.receivedAt || latest.time).getTime())
@@ -220,7 +229,7 @@ export default function Home() {
     const base = topLevels.map((l) => l.score);
     if (base.length >= 12) return base.slice(0, 24);
     const out = [...base];
-    while (out.length < 24) out.push(Math.max(5, (out[out.length - 1] || 40) + (Math.random() - 0.5) * 12));
+    while (out.length < 24) out.push(Math.max(5, (out[out.length - 1] || 40) * 0.92 + 8));
     return out;
   }, [topLevels]);
 
@@ -257,11 +266,24 @@ export default function Home() {
     return nodes;
   }, [mt5.feeds, price, atm, putSkew, topLevels, latest, data.live]);
 
+  const treeFeeds = [
+    { source: "WIN", tier: mt5.feeds.WIN?.tier, signal: mt5.feeds.WIN?.signal, price: mt5.feeds.WIN?.price, active: !!mt5.feeds.WIN },
+    { source: "XAU5", tier: mt5.feeds.XAU5?.tier, signal: mt5.feeds.XAU5?.signal, price: mt5.feeds.XAU5?.price, active: !!mt5.feeds.XAU5 },
+    { source: "XAU1", tier: mt5.feeds.XAU1?.tier, signal: mt5.feeds.XAU1?.signal, price: mt5.feeds.XAU1?.price, active: !!mt5.feeds.XAU1 },
+  ];
+
   const utc = now.toISOString().slice(11, 19) + " UTC";
+
+  const themeColors: Record<string, string> = {
+    cyan: "linear-gradient(135deg,#0a1520,#123040)",
+    emerald: "linear-gradient(135deg,#0a1812,#0d2820)",
+    violet: "linear-gradient(135deg,#120e1c,#1a1430)",
+    amber: "linear-gradient(135deg,#18120a,#2a1c0c)",
+    ice: "linear-gradient(135deg,#0a1420,#102030)",
+  };
 
   return (
     <div className="cc">
-      {/* TOP STRIP */}
       <header className="topStrip">
         <div className="brandBlock">
           <div className="brandMark">GC</div>
@@ -271,32 +293,33 @@ export default function Home() {
           </div>
         </div>
         <div className="chipRow">
-          <span className={"chip " + (mt5Live ? "green" : "")}>
-            <span className={"liveDot " + (mt5Live ? "" : "off")} style={{ marginRight: 5 }} />
+          <span className={"chip " + (mt5Live ? "green" : "red")}>
+            <span className={"liveDot " + (mt5Live ? "" : "off")} style={{ marginRight: 4 }} />
             {mt5Live ? "MT5 LIVE" : "MT5 IDLE"}
           </span>
           <span className={"chip " + (data.live ? "on" : "")}>{data.live ? "BARCHART ON" : "CSV OFF"}</span>
           <span className="chip on">ZONE ENGINE</span>
           <span className="chip">EARLY / PARTIAL / CONFIRMED</span>
           <span className="chip amber">XAUUSD FOCUS</span>
-          {latest && <span className={"chip " + (latest.tier === "confirmed" ? "green" : "amber")}>LAST {latest.source} {latest.tier.toUpperCase()}</span>}
         </div>
         <div className="topMeta">
           <span>XAU</span>
           <b>{price ? fmt(price, 2) : "—"}</b>
           <span>{utc}</span>
+          <button className="iconBtn" type="button" onClick={() => setSettingsOpen(true)}>
+            THEME
+          </button>
         </div>
       </header>
 
       <BarchartCsvImport />
 
       <div className="mainGrid">
-        {/* ENGINE CARD */}
         <section className="panel engineCard">
           <div className="panelHead">
             <div>
               <b>SIGNAL ENGINE</b>
-              <small>LIVE FEED STATUS</small>
+              <small>LIVE FEED</small>
             </div>
             <span className={"chip " + (mt5Live ? "green" : "")}>{mt5Live ? "LIVE" : "IDLE"}</span>
           </div>
@@ -305,205 +328,189 @@ export default function Home() {
               {eventCount ? eventCount + " EVENTS" : "NO EVENTS"}
             </div>
             <div className="statGrid">
-              <div>
-                <span>CONFIRMED</span>
-                <b style={{ color: "var(--green)" }}>{confirmedN}</b>
-              </div>
-              <div>
-                <span>PARTIAL</span>
-                <b style={{ color: "var(--amber)" }}>{partialN}</b>
-              </div>
-              <div>
-                <span>EARLY</span>
-                <b style={{ color: "var(--cyan)" }}>{earlyN}</b>
-              </div>
-              <div>
-                <span>ACTIVE FEEDS</span>
-                <b>{Object.keys(mt5.feeds).length}/3</b>
-              </div>
-              <div>
-                <span>WIN RATE</span>
-                <b>—</b>
-              </div>
-              <div>
-                <span>LAST LATENCY</span>
-                <b>{latLabel}</b>
-              </div>
+              <div><span>CONFIRMED</span><b style={{ color: "var(--c2)" }}>{confirmedN}</b></div>
+              <div><span>PARTIAL</span><b style={{ color: "var(--c4)" }}>{partialN}</b></div>
+              <div><span>EARLY</span><b style={{ color: "var(--c1)" }}>{earlyN}</b></div>
+              <div><span>FEEDS</span><b>{Object.keys(mt5.feeds).length}/3</b></div>
+              <div><span>LATENCY</span><b>{latLabel}</b></div>
+              <div><span>LEVELS</span><b>{levels.length}</b></div>
             </div>
           </div>
         </section>
 
-        {/* SPOT / GAMMA */}
         <section className="panel spotPanel">
           <div className="panelHead">
             <div>
               <b>XAU / GC SPOT</b>
-              <small>{data.live ? "BARCHART UNDERLYING" : mt5Price ? "FROM MT5 SIGNAL" : "AWAITING DATA"}</small>
+              <small>{data.live ? "BARCHART" : mt5Price ? "MT5" : "AWAITING"}</small>
             </div>
             <span className={"chip " + (price ? "green" : "")}>{price ? "LIVE" : "—"}</span>
           </div>
           <div className="panelBody">
             <div className="bigPrice">{price ? fmt(price, 2) : "—"}</div>
             <div className="statGrid">
-              <div>
-                <span>ATM IV</span>
-                <b>{atm ? fmt((atm.callIv + atm.putIv) / 2, 2) + "%" : "—"}</b>
-              </div>
+              <div><span>ATM IV</span><b>{atm ? fmt((atm.callIv + atm.putIv) / 2, 2) + "%" : "—"}</b></div>
               <div>
                 <span>PUT SKEW</span>
-                <b style={{ color: putSkew >= 0 ? "var(--amber)" : "var(--cyan)" }}>
-                  {atm ? fmt(putSkew, 2) : "—"}
-                </b>
+                <b style={{ color: putSkew >= 0 ? "var(--c4)" : "var(--c1)" }}>{atm ? fmt(putSkew, 2) : "—"}</b>
               </div>
             </div>
             <div className="miniBars">
               {topLevels.length
                 ? topLevels.map((l) => (
-                    <i key={l.strike} style={{ height: Math.max(8, (l.gamma / maxGamma) * 100) + "%" }} title={String(l.strike)} />
+                    <i key={l.strike} style={{ height: Math.max(6, (l.gamma / maxGamma) * 100) + "%" }} />
                   ))
-                : Array.from({ length: 12 }).map((_, i) => (
-                    <i key={i} style={{ height: 8 + (i % 5) * 10 + "%", opacity: 0.25 }} />
+                : Array.from({ length: 10 }).map((_, i) => (
+                    <i key={i} style={{ height: 6 + (i % 4) * 8 + "%", opacity: 0.25 }} />
                   ))}
             </div>
           </div>
         </section>
 
-        {/* LATENCY */}
         <section className="panel latPanel">
           <div className="panelHead">
             <div>
               <b>FEED LATENCY</b>
-              <small>SIGNAL AGE · POLL 3S</small>
+              <small>SIGNAL AGE · 3S POLL</small>
             </div>
           </div>
           <div className="panelBody">
             <div className="latBig">{latLabel}</div>
             <div className="statGrid">
-              <div>
-                <span>BRIDGE</span>
-                <b style={{ color: mt5Live ? "var(--green)" : "var(--red)" }}>{mt5Live ? "UP" : "DOWN"}</b>
-              </div>
-              <div>
-                <span>CSV</span>
-                <b>{data.live ? "LOADED" : "OFF"}</b>
-              </div>
+              <div><span>BRIDGE</span><b style={{ color: mt5Live ? "var(--c2)" : "var(--c5)" }}>{mt5Live ? "UP" : "DOWN"}</b></div>
+              <div><span>CSV</span><b>{data.live ? "LOADED" : "OFF"}</b></div>
             </div>
             <div className="spark">
               {spark.map((v, i) => (
-                <i key={i} style={{ height: Math.max(4, (v / 100) * 100) + "%" }} />
+                <i key={i} style={{ height: Math.max(3, (v / 100) * 100) + "%" }} />
               ))}
             </div>
           </div>
         </section>
 
-        {/* LEADERS */}
         <section className="panel leadPanel">
           <div className="panelHead">
             <div>
               <b>LEVEL LEADERS</b>
-              <small>GAMMA RANKED</small>
+              <small>GAMMA RANK</small>
             </div>
           </div>
-          <div className="panelBody" style={{ padding: "4px 8px" }}>
+          <div className="panelBody" style={{ padding: "2px 6px" }}>
             {topLevels.length ? (
               topLevels.map((l, i) => (
                 <div className="leadRow" key={l.strike}>
                   <span className="leadRank">{String(i + 1).padStart(2, "0")}</span>
-                  <span className="leadStrike">
-                    {fmt(l.strike, 0)} <small style={{ color: "var(--muted)" }}>{l.side}</small>
-                  </span>
+                  <span className="leadStrike">{fmt(l.strike, 0)} <small style={{ color: "var(--muted)" }}>{l.side}</small></span>
                   <span className="leadScore">{l.score}</span>
                 </div>
               ))
             ) : (
-              <div className="empty">Import Barchart CSV for ranked levels</div>
+              <div className="empty">Import CSV</div>
             )}
           </div>
         </section>
 
-        {/* WIRE */}
         <section className="panel wirePanel">
           <div className="panelHead">
             <div>
               <b>WIRE INSPECTOR</b>
-              <small>MT5 INGEST LOG</small>
+              <small>MT5 INGEST</small>
             </div>
           </div>
-          <div className="panelBody">
+          <div className="panelBody scroll">
             {mt5.events.length ? (
-              mt5.events.slice(0, 28).map((e) => (
+              mt5.events.slice(0, 40).map((e) => (
                 <div className="wireLine" key={e.id}>
                   <span className="ts">{new Date(e.receivedAt || e.time).toLocaleTimeString()}</span>{" "}
                   <span className="src">{e.source}</span>{" "}
                   <span className={"tier-" + e.tier}>{e.tier}</span>{" "}
-                  <span className="ok">{fmt(e.price, 2)}</span>{" "}
-                  {e.signal.slice(0, 48)}
+                  <span className="ok">{fmt(e.price, 2)}</span> {e.signal.slice(0, 40)}
                 </div>
               ))
             ) : (
-              <div className="empty">No ingest traffic yet. Bridge posts appear here live.</div>
+              <div className="empty">No ingest yet</div>
             )}
           </div>
         </section>
 
-        {/* NEURAL SHELL */}
         <section className="panel neuralPanel">
-          <NeuralShell nodes={neuralNodes} title="NEURAL SHELL · ZONE GRAPH" subtitle="MT5 INPUTS · BARCHART LEVELS · LIVE MODEL VIEW" />
-          <div className="feedStrip">
-            <FeedMini title="WIN" feed={mt5.feeds.WIN} />
-            <FeedMini title="XAU 5M" feed={mt5.feeds.XAU5} />
-            <FeedMini title="XAU 1M" feed={mt5.feeds.XAU1} />
+          <div className="centerSplit">
+            <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+              <NeuralShell nodes={neuralNodes} title="NEURAL SHELL · ZONE GRAPH" subtitle="MT5 · BARCHART · LIVE" />
+              <div className="feedStrip">
+                <FeedMini title="WIN" feed={mt5.feeds.WIN} />
+                <FeedMini title="XAU 5M" feed={mt5.feeds.XAU5} />
+                <FeedMini title="XAU 1M" feed={mt5.feeds.XAU1} />
+              </div>
+            </div>
+            <DataFlowTree
+              feeds={treeFeeds}
+              levels={topLevels.map((l) => ({ strike: l.strike, score: l.score, side: l.side }))}
+              eventCount={eventCount}
+              csvLive={!!data.live}
+              price={price}
+            />
           </div>
         </section>
 
-        {/* TAPE */}
+        <section className="panel leadPanel2">
+          <div className="panelHead">
+            <div>
+              <b>TOP LEVELS</b>
+              <small>DETAIL</small>
+            </div>
+          </div>
+          <div className="panelBody scroll levelsMini">
+            {levels.length ? (
+              levels.slice(0, 12).map((l, i) => (
+                <div className="lv" key={l.strike}>
+                  <span>{String(i + 1).padStart(2, "0")}</span>
+                  <b>{fmt(l.strike, 0)}</b>
+                  <span style={{ color: "var(--c2)" }}>{l.score}</span>
+                  <span>{l.side} · {l.dte}d</span>
+                </div>
+              ))
+            ) : (
+              <div className="empty">No levels</div>
+            )}
+          </div>
+        </section>
+
         <section className="panel tapePanel">
           <div className="panelHead">
             <div>
-              <b>EXECUTION TAPE · MT5 TIME & SALES</b>
+              <b>EXECUTION TAPE · MT5</b>
               <small>EARLY · PARTIAL · CONFIRMED</small>
             </div>
             <span className="chip on">{eventCount} ROWS</span>
           </div>
-          <div className="panelBody" style={{ padding: 0 }}>
+          <div className="panelBody scroll" style={{ padding: 0 }}>
             {mt5.events.length ? (
               <table className="tapeTable">
                 <thead>
                   <tr>
-                    <th>TIME</th>
-                    <th>SRC</th>
-                    <th>TIER</th>
-                    <th>SIGNAL</th>
-                    <th>PRICE</th>
-                    <th>TF</th>
-                    <th>SIDE</th>
+                    <th>TIME</th><th>SRC</th><th>TIER</th><th>SIGNAL</th><th>PRICE</th><th>TF</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {mt5.events.slice(0, 40).map((e) => (
+                  {mt5.events.slice(0, 30).map((e) => (
                     <tr key={e.id}>
                       <td>{new Date(e.receivedAt || e.time).toLocaleTimeString()}</td>
                       <td>{e.source}</td>
-                      <td>
-                        <span className={tierTag(e.tier)}>{e.tier}</span>
-                      </td>
-                      <td className={e.side === "buy" ? "sigBuy" : e.side === "sell" ? "sigSell" : ""}>
-                        {e.signal}
-                      </td>
+                      <td><span className={tierTag(e.tier)}>{e.tier}</span></td>
+                      <td className={e.side === "buy" ? "sigBuy" : e.side === "sell" ? "sigSell" : ""}>{e.signal}</td>
                       <td>{fmt(e.price, 2)}</td>
                       <td>{e.tf || "—"}</td>
-                      <td>{e.side || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <div className="empty">Tape empty — signals from WIN / XAU5 / XAU1 stream here.</div>
+              <div className="empty">Tape empty — waiting for MT5 signals</div>
             )}
           </div>
         </section>
 
-        {/* FUNNEL */}
         <section className="panel funnelPanel">
           <div className="panelHead">
             <div>
@@ -513,113 +520,111 @@ export default function Home() {
           </div>
           <div className="panelBody">
             <div className="funnelViz">
-              <svg className="funnelSvg" viewBox="0 0 320 120" preserveAspectRatio="none">
+              <svg className="funnelSvg" viewBox="0 0 320 80" preserveAspectRatio="none">
                 <defs>
                   <linearGradient id="fg" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="rgba(78,240,226,0.5)" />
-                    <stop offset="55%" stopColor="rgba(255,200,87,0.45)" />
-                    <stop offset="100%" stopColor="rgba(93,255,159,0.55)" />
+                    <stop offset="0%" stopColor="var(--c1)" stopOpacity="0.5" />
+                    <stop offset="55%" stopColor="var(--c4)" stopOpacity="0.45" />
+                    <stop offset="100%" stopColor="var(--c2)" stopOpacity="0.55" />
                   </linearGradient>
                 </defs>
-                <polygon points="10,15 200,35 200,85 10,105" fill="url(#fg)" opacity="0.25" />
-                <polygon points="200,35 310,50 310,70 200,85" fill="rgba(93,255,159,0.2)" />
+                <polygon points="10,10 200,22 200,58 10,70" fill="url(#fg)" opacity="0.3" />
+                <polygon points="200,22 310,32 310,48 200,58" fill="var(--c2)" opacity="0.2" />
                 <polyline
-                  fill="none"
-                  stroke="rgba(78,240,226,0.7)"
-                  strokeWidth="1.5"
+                  fill="none" stroke="var(--c1)" strokeWidth="1.5"
                   points={
-                    "15," +
-                    (90 - Math.min(70, earlyN * 8)) +
-                    " 110," +
-                    (80 - Math.min(50, partialN * 6)) +
-                    " 220," +
-                    (70 - Math.min(40, confirmedN * 5)) +
-                    " 300,60"
+                    "15," + (60 - Math.min(40, earlyN * 6)) +
+                    " 110," + (52 - Math.min(30, partialN * 5)) +
+                    " 220," + (46 - Math.min(24, confirmedN * 4)) +
+                    " 300,40"
                   }
                 />
-                <circle cx="15" cy={90 - Math.min(70, earlyN * 8)} r="3" fill="var(--cyan)" />
-                <circle cx="110" cy={80 - Math.min(50, partialN * 6)} r="3" fill="var(--amber)" />
-                <circle cx="220" cy={70 - Math.min(40, confirmedN * 5)} r="3" fill="var(--green)" />
-                <circle cx="300" cy="60" r="3" fill="var(--green)" />
+                <circle cx="15" cy={60 - Math.min(40, earlyN * 6)} r="3" fill="var(--c1)" />
+                <circle cx="110" cy={52 - Math.min(30, partialN * 5)} r="3" fill="var(--c4)" />
+                <circle cx="220" cy={46 - Math.min(24, confirmedN * 4)} r="3" fill="var(--c2)" />
+                <circle cx="300" cy="40" r="3" fill="var(--c2)" />
               </svg>
             </div>
             <div className="funnelStats">
-              <div>
-                <span>EARLY</span>
-                <b style={{ color: "var(--cyan)" }}>{earlyN}</b>
-              </div>
-              <div>
-                <span>PARTIAL</span>
-                <b style={{ color: "var(--amber)" }}>{partialN}</b>
-              </div>
-              <div>
-                <span>CONFIRMED</span>
-                <b style={{ color: "var(--green)" }}>{confirmedN}</b>
-              </div>
+              <div><span>EARLY</span><b style={{ color: "var(--c1)" }}>{earlyN}</b></div>
+              <div><span>PARTIAL</span><b style={{ color: "var(--c4)" }}>{partialN}</b></div>
+              <div><span>CONFIRMED</span><b style={{ color: "var(--c2)" }}>{confirmedN}</b></div>
             </div>
           </div>
         </section>
       </div>
 
-      {/* LEVELS DRAWER */}
-      <details className="levelsDrawer">
-        <summary>
-          <span>BARCHART REACTION LEVELS · FULL TABLE</span>
-          <span style={{ color: "var(--muted)" }}>{levels.length} ranked · {rows.length} option rows</span>
-        </summary>
-        <div className="levelsBody">
-          <div className="lvRow head">
-            <span>RANK</span>
-            <span>STRIKE</span>
-            <span>SCORE</span>
-            <span>GAMMA</span>
-            <span>SKEW</span>
-            <span>DTE</span>
-            <span>LABEL</span>
-          </div>
-          {levels.length ? (
-            levels.slice(0, 24).map((l, i) => (
-              <div className="lvRow" key={l.strike}>
-                <span>{String(i + 1).padStart(2, "0")}</span>
-                <b>{fmt(l.strike, 0)}</b>
-                <span style={{ color: "var(--green)" }}>{l.score}</span>
-                <span>{l.gamma.toFixed(5)}</span>
-                <span>{(l.putIv - l.callIv).toFixed(2)}%</span>
-                <span>{l.dte}</span>
-                <span>
-                  {l.label} · {l.side}
-                </span>
-              </div>
-            ))
-          ) : (
-            <div className="empty">No levels — import Barchart Volatility & Greeks CSV.</div>
-          )}
-        </div>
-      </details>
-
       <footer className="footStrip">
-        <span>
-          GC COMMAND CENTER · <b>{mt5Live ? "MT5 BRIDGE UP" : "MT5 IDLE"}</b>
-        </span>
+        <span>GC COMMAND CENTER · <b>{mt5Live ? "BRIDGE UP" : "BRIDGE IDLE"}</b></span>
         <div className="footMetrics">
-          <span>
-            EVENTS<b>{eventCount}</b>
-          </span>
-          <span>
-            FEEDS<b>{Object.keys(mt5.feeds).length}/3</b>
-          </span>
-          <span>
-            LEVELS<b>{levels.length}</b>
-          </span>
-          <span>
-            LATENCY<b>{latLabel}</b>
-          </span>
-          <span>
-            SOURCE<b>{data.live ? "BARCHART+MT5" : "MT5"}</b>
-          </span>
+          <span>EVT<b>{eventCount}</b></span>
+          <span>FEEDS<b>{Object.keys(mt5.feeds).length}/3</b></span>
+          <span>LV<b>{levels.length}</b></span>
+          <span>LAT<b>{latLabel}</b></span>
+          <span>THEME<b>{theme.toUpperCase()}</b></span>
         </div>
         <span>{utc}</span>
       </footer>
+
+      {settingsOpen && (
+        <div className="settingsOverlay" onClick={() => setSettingsOpen(false)}>
+          <div className="settingsPanel" onClick={(e) => e.stopPropagation()}>
+            <div className="settingsHead">
+              <b>THEME SETTINGS</b>
+              <button className="iconBtn" type="button" onClick={() => setSettingsOpen(false)}>CLOSE</button>
+            </div>
+            <div className="settingsBody">
+              <label>PRESETS (MULTI-COLOR BLENDS)</label>
+              <div className="themeGrid">
+                {THEMES.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    className={"themeSwatch" + (theme === t ? " active" : "")}
+                    style={{ background: themeColors[t] }}
+                    onClick={() => setTheme(t)}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              <label>CUSTOM BLEND (6 ACCENT COLORS)</label>
+              <div className="colorRow">
+                {(["c1", "c2", "c3", "c4", "c5", "c6"] as const).map((key) => (
+                  <div key={key}>
+                    <span style={{ fontSize: 7, color: "var(--muted)" }}>{key.toUpperCase()}</span>
+                    <input
+                      type="color"
+                      value={custom[key]}
+                      onChange={(e) => {
+                        setCustom((prev) => ({ ...prev, [key]: e.target.value }));
+                        setTheme("custom");
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="settingsActions">
+                <button
+                  className="ghost"
+                  type="button"
+                  onClick={() => {
+                    setTheme("cyan");
+                    setCustom(defaultCustom);
+                  }}
+                >
+                  RESET
+                </button>
+                <button className="primary" type="button" onClick={() => setSettingsOpen(false)}>
+                  APPLY
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
