@@ -97,3 +97,24 @@ function parseCsv(text:string): ImportedRow[] {
 
   return out.map(x=>({...x,baseLast,percentFromLast:baseLast?((x.strike-baseLast)/baseLast)*100:0}));
 }
+
+
+export default function BarchartCsvImport(){
+  const input=useRef<HTMLInputElement>(null); const [msg,setMsg]=useState("");
+  function open(){window.open("https://www.barchart.com/futures/quotes/GCZ26/volatility-greeks/IY6V26?futuresOptionsView=split","_blank","noopener,noreferrer");}
+  function choose(){input.current?.click();}
+  function read(file:File){
+    const reader=new FileReader();
+    reader.onload=()=>{try{
+      const rows=parseCsv(String(reader.result||""));
+      window.dispatchEvent(new CustomEvent("barchart-csv",{detail:{rows,source:file.name}}));
+      setMsg(rows.length+" rows imported");
+    }catch(e){setMsg(e instanceof Error?e.message:"Could not read CSV");}};
+    reader.readAsText(file);
+  }
+  return <div className="importBox">
+    <div><b>BARCHART CSV</b><small>Use Barchart's own Download button — no scraping.</small></div>
+    <div className="importActions"><button className="ghost" onClick={open}>Open Barchart</button><button className="primary" onClick={choose}>Import Downloaded CSV</button><input ref={input} type="file" accept=".csv,text/csv" hidden onChange={e=>{const file=e.target.files?.[0];if(file)read(file);e.currentTarget.value="";}}/></div>
+    {msg&&<span className="importMsg">{msg}</span>}
+  </div>;
+}
