@@ -64,6 +64,7 @@ export default function Home() {
     return () => { stop = true; clearInterval(id); };
   }, []);
   useEffect(() => { const id = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(id); }, []);
+  useEffect(() => { try { const cached = localStorage.getItem("gc-barchart-cache"); if (cached) { const parsed = JSON.parse(cached); if (parsed?.rows?.length) setData(parsed); } } catch {} }, []);
 
   const rows: Row[] = data.rows || [];
   const mt5Price = mt5.feeds.XAU5?.price || mt5.feeds.XAU1?.price || mt5.feeds.WIN?.price || 0;
@@ -120,7 +121,7 @@ export default function Home() {
           <span className="chip on">ZONE ENGINE</span><span className="chip">EARLY / PARTIAL / CONFIRMED</span><span className="chip amber">XAUUSD FOCUS</span>
         </div>
         <div className="topMeta"><span>XAU</span><b>{price ? fmt(price, 2) : "—"}</b><span>{utc}</span>
-          <a className="goldLabLaunch" href="/gold-lab" target="_blank" rel="noreferrer">OPEN GOLD LAB ↗</a><button className="iconBtn" type="button" onClick={() => setDetailOpen(true)}>DATA</button>
+          <button className="iconBtn" type="button" onClick={() => setDetailOpen(true)}>DATA</button>
           <button className="iconBtn" type="button" onClick={() => setSettingsOpen(true)}>THEME</button>
         </div>
       </header>
@@ -152,8 +153,51 @@ export default function Home() {
         <section className="panel tapePanel accent-mint"><div className="panelHead"><div><b>EXECUTION TAPE · MT5</b><small>EARLY · PARTIAL · CONFIRMED</small></div><span className="chip on">{eventCount} ROWS</span></div><div className="panelBody scroll" style={{ padding: 0 }}>{mt5.events.length ? (<table className="tapeTable"><thead><tr><th>TIME</th><th>SRC</th><th>TIER</th><th>SIGNAL</th><th>PRICE</th><th>TF</th></tr></thead><tbody>{mt5.events.slice(0, 30).map((e) => (<tr key={e.id}><td>{new Date(e.receivedAt || e.time).toLocaleTimeString()}</td><td>{e.source}</td><td><span className={tierTag(e.tier)}>{e.tier}</span></td><td className={e.side === "buy" ? "sigBuy" : e.side === "sell" ? "sigSell" : ""}>{e.signal}</td><td>{fmt(e.price, 2)}</td><td>{e.tf || "—"}</td></tr>))}</tbody></table>) : (<div className="empty">Tape empty — waiting for MT5 signals</div>)}</div></section>
         <section className="panel funnelPanel accent-gold"><div className="panelHead"><div><b>RESOLUTION FUNNEL</b><small>EARLY → PARTIAL → CONFIRMED</small></div></div><div className="panelBody"><div className="funnelViz"><svg className="funnelSvg" viewBox="0 0 320 80" preserveAspectRatio="none"><defs><linearGradient id="fg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="var(--c1)" stopOpacity="0.5" /><stop offset="55%" stopColor="var(--c4)" stopOpacity="0.45" /><stop offset="100%" stopColor="var(--c2)" stopOpacity="0.55" /></linearGradient></defs><polygon points="10,10 200,22 200,58 10,70" fill="url(#fg)" opacity="0.3" /><polygon points="200,22 310,32 310,48 200,58" fill="var(--c2)" opacity="0.2" /><polyline fill="none" stroke="var(--c1)" strokeWidth="1.5" points={"15," + (60 - Math.min(40, earlyN * 6)) + " 110," + (52 - Math.min(30, partialN * 5)) + " 220," + (46 - Math.min(24, confirmedN * 4)) + " 300,40"} /><circle cx="15" cy={60 - Math.min(40, earlyN * 6)} r="3" fill="var(--c1)" /><circle cx="110" cy={52 - Math.min(30, partialN * 5)} r="3" fill="var(--c4)" /><circle cx="220" cy={46 - Math.min(24, confirmedN * 4)} r="3" fill="var(--c2)" /><circle cx="300" cy="40" r="3" fill="var(--c2)" /></svg></div><div className="funnelStats"><div><span>EARLY</span><b style={{ color: "var(--c1)" }}>{earlyN}</b></div><div><span>PARTIAL</span><b style={{ color: "var(--c4)" }}>{partialN}</b></div><div><span>CONFIRMED</span><b style={{ color: "var(--c2)" }}>{confirmedN}</b></div></div></div></section>
       </div>
-      <footer className="footStrip"><span>GC COMMAND CENTER · <b>{mt5Live ? "BRIDGE UP" : "BRIDGE IDLE"}</b></span><div className="footMetrics"><span>EVT<b>{eventCount}</b></span><span>FEEDS<b>{Object.keys(mt5.feeds).length}/3</b></span><span>LV<b>{levels.length}</b></span><span>LAT<b>{latLabel}</b></span><span>THEME<b>{theme.toUpperCase()}</b></span></div><span>{utc}</span></footer>
-      {settingsOpen && (<div className="settingsOverlay" onClick={() => setSettingsOpen(false)}><div className="settingsPanel" onClick={(e) => e.stopPropagation()}><div className="settingsHead"><b>THEME SETTINGS</b><button className="iconBtn" type="button" onClick={() => setSettingsOpen(false)}>CLOSE</button></div><div className="settingsBody"><label>PRESETS</label><div className="themeGrid">{THEMES.map((t) => (<button key={t} type="button" className={"themeSwatch" + (theme === t ? " active" : "")} style={{ background: themeColors[t] }} onClick={() => setTheme(t)}>{t}</button>))}</div><label>CUSTOM BLEND</label><div className="colorRow">{(["c1", "c2", "c3", "c4", "c5", "c6"] as const).map((key) => (<div key={key}><span style={{ fontSize: 9, color: "var(--muted)" }}>{key.toUpperCase()}</span><input type="color" value={custom[key]} onChange={(e) => { setCustom((prev) => ({ ...prev, [key]: e.target.value })); setTheme("custom"); }} /></div>))}</div><div className="settingsActions"><button className="ghost" type="button" onClick={() => { setTheme("neon"); setCustom(defaultCustom); }}>RESET NEON</button><button className="primary" type="button" onClick={() => setSettingsOpen(false)}>APPLY</button></div></div></div></div>)}
+
+        <section className="panel goldInline accent-gold">
+          <div className="panelHead"><div><b>GOLD LAB · MARKET VIEW</b><small>PRICE TRACE · BARCHART IMPORT · MT5</small></div><span className={"chip " + (price ? "green" : "")}>{price ? (mt5Price ? "MT5 OBSERVATION" : "IMPORTED DATA") : "AWAITING DATA"}</span></div>
+          <div className="goldInlineGrid">
+            <div className="goldInlinePrice"><small>LAST OBSERVED PRICE · NOT A VERIFIED LIVE QUOTE</small><strong>{price ? fmt(price, 2) : "—"}</strong><span>{mt5Price ? "Source: MT5 signal price" : data.live ? "Source: imported Barchart CSV" : "Import Barchart CSV or wait for MT5 data"}</span></div>
+            <div className="goldInlineChart">
+              <div className="goldInlineChartTitle"><b>PRICE OBSERVATIONS</b><span>{mt5.events.filter(e => Number(e.price) > 0).length || rows.filter(r => Number(r.last) > 0).length} points available</span></div>
+              <svg viewBox="0 0 640 150" preserveAspectRatio="none" role="img" aria-label="Gold price observations from MT5 or imported Barchart data">
+                <defs><linearGradient id="goldInlineFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f4c96b" stopOpacity=".25"/><stop offset="100%" stopColor="#f4c96b" stopOpacity="0"/></linearGradient></defs>
+                {[25,55,85,115].map(y => <line key={y} x1="8" y1={y} x2="632" y2={y} stroke="rgba(255,255,255,.1)" strokeDasharray="4 6"/>)}
+                {(() => { const vals = mt5.events.filter(e => Number(e.price) > 0).slice(0,40).map(e => Number(e.price)).reverse(); const pointsData = (vals.length > 1 ? vals : rows.filter(r => Number(r.last) > 0).slice(0,40).map(r => Number(r.last)).reverse()); if (pointsData.length < 2) return null; const lo=Math.min(...pointsData), hi=Math.max(...pointsData); const pts=pointsData.map((v,i)=> (8+i*624/Math.max(1,pointsData.length-1))+","+(125-(v-lo)/(hi-lo||1)*100)).join(" "); return <><polygon points={"8,138 "+pts+" 632,138"} fill="url(#goldInlineFill)"/><polyline points={pts} fill="none" stroke="#f4c96b" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/></>; })()}
+              </svg>
+              {mt5.events.filter(e => Number(e.price) > 0).length < 2 && rows.filter(r => Number(r.last) > 0).length < 2 && <div className="goldInlineEmpty">Chart fills when multiple price observations are available.</div>}
+            </div>
+            <div className="goldInlineSignals"><div className="goldInlineChartTitle"><b>MT5 SIGNALS</b><span>{Object.keys(mt5.feeds).length} feeds</span></div>{(["XAU5","XAU1","WIN"] as const).map(key => { const f=mt5.feeds[key]; return <div className="goldInlineSignal" key={key}><span>{key==="XAU5"?"XAU 5M":key==="XAU1"?"XAU 1M":"WIN"}</span><b>{f?.signal || "Waiting for MT5…"}</b><strong>{f?.price ? fmt(f.price,2) : "—"}</strong></div>; })}</div>
+            <div className="goldInlineRows"><div className="goldInlineChartTitle"><b>BARCHART IMPORT</b><span>{rows.length} rows</span></div>{rows.length ? <div className="goldInlineTable"><div><span>SYMBOL</span><span>TYPE</span><span>STRIKE</span><span>LAST</span></div>{rows.slice(0,5).map((r,i)=><div key={i}><span>{r.symbol||"—"}</span><span>{r.type||"—"}</span><span>{r.strike?fmt(r.strike,0):"—"}</span><span>{r.last?fmt(r.last,2):"—"}</span></div>)}</div> : <p className="goldInlineHint">Import a Barchart CSV above; it will appear here automatically.</p>}</div>
+          </div>
+          <div className="goldInlineNote">This embedded view combines available MT5 signal prices and imported Barchart rows. It does not yet provide a verified real-time XAU/USD market feed.</div>
+        </section>
+\n      <footer className="footStrip"><span>GC COMMAND CENTER · <b>{mt5Live ? "BRIDGE UP" : "BRIDGE IDLE"}</b></span><div className="footMetrics"><span>EVT<b>{eventCount}</b></span><span>FEEDS<b>{Object.keys(mt5.feeds).length}/3</b></span><span>LV<b>{levels.length}</b></span><span>LAT<b>{latLabel}</b></span><span>THEME<b>{theme.toUpperCase()}</b></span></div><span>{utc}</span></footer>
+
+      <style jsx global>{`
+        .goldInline{grid-column:1/-1;min-width:0}
+        .goldInlineGrid{display:grid;grid-template-columns:minmax(180px,.75fr) minmax(280px,1.4fr);gap:14px}
+        .goldInlinePrice,.goldInlineChart,.goldInlineSignals,.goldInlineRows{min-width:0;border:1px solid rgba(244,201,107,.16);border-radius:9px;background:rgba(0,0,0,.15);padding:14px}
+        .goldInlinePrice{display:flex;flex-direction:column;justify-content:center;gap:10px}
+        .goldInlinePrice small{font-size:9px;letter-spacing:1px;color:var(--muted)}
+        .goldInlinePrice strong{font-size:clamp(28px,4vw,46px);font-weight:500;color:#f4c96b;overflow-wrap:anywhere}
+        .goldInlinePrice span,.goldInlineHint{font-size:10px;color:var(--muted);line-height:1.5}
+        .goldInlineChart{position:relative}
+        .goldInlineChartTitle{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+        .goldInlineChartTitle b{font-size:10px;letter-spacing:.8px}
+        .goldInlineChartTitle span{font-size:9px;color:var(--muted)}
+        .goldInlineChart svg{width:100%;height:145px;display:block}
+        .goldInlineEmpty{position:absolute;inset:45px 12px 12px;display:grid;place-items:center;font-size:10px;color:var(--muted);text-align:center;pointer-events:none}
+        .goldInlineSignals,.goldInlineRows{grid-column:auto}
+        .goldInlineSignal{display:grid;grid-template-columns:55px minmax(0,1fr) auto;gap:9px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:10px}
+        .goldInlineSignal span{color:#f4c96b}.goldInlineSignal b{font-weight:400;overflow-wrap:anywhere}.goldInlineSignal strong{font-variant-numeric:tabular-nums}
+        .goldInlineTable>div{display:grid;grid-template-columns:1.1fr .7fr .8fr .8fr;gap:8px;padding:8px 2px;border-bottom:1px solid rgba(255,255,255,.06);font-size:10px}
+        .goldInlineTable>div:first-child{font-size:8px;color:var(--muted);letter-spacing:.8px}
+        .goldInlineTable>div span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .goldInlineNote{font-size:9px;color:var(--muted);padding-top:12px;line-height:1.5}
+        @media(max-width:900px){.goldInlineGrid{grid-template-columns:1fr}.goldInlinePrice,.goldInlineChart,.goldInlineSignals,.goldInlineRows{grid-column:1}}
+      `}</style>
+\n      {settingsOpen && (<div className="settingsOverlay" onClick={() => setSettingsOpen(false)}><div className="settingsPanel" onClick={(e) => e.stopPropagation()}><div className="settingsHead"><b>THEME SETTINGS</b><button className="iconBtn" type="button" onClick={() => setSettingsOpen(false)}>CLOSE</button></div><div className="settingsBody"><label>PRESETS</label><div className="themeGrid">{THEMES.map((t) => (<button key={t} type="button" className={"themeSwatch" + (theme === t ? " active" : "")} style={{ background: themeColors[t] }} onClick={() => setTheme(t)}>{t}</button>))}</div><label>CUSTOM BLEND</label><div className="colorRow">{(["c1", "c2", "c3", "c4", "c5", "c6"] as const).map((key) => (<div key={key}><span style={{ fontSize: 9, color: "var(--muted)" }}>{key.toUpperCase()}</span><input type="color" value={custom[key]} onChange={(e) => { setCustom((prev) => ({ ...prev, [key]: e.target.value })); setTheme("custom"); }} /></div>))}</div><div className="settingsActions"><button className="ghost" type="button" onClick={() => { setTheme("neon"); setCustom(defaultCustom); }}>RESET NEON</button><button className="primary" type="button" onClick={() => setSettingsOpen(false)}>APPLY</button></div></div></div></div>)}
       <DetailDrawer open={detailOpen} onClose={() => setDetailOpen(false)} levels={levels} price={price} rowsCount={rows.length} />
     </div>
   );
