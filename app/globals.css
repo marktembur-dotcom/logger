@@ -176,3 +176,8 @@ button.ghost,button.primary{font:inherit;font-size:10px;cursor:pointer;border-ra
   .feedStrip{grid-template-columns:minmax(0,1fr);gap:8px;padding:8px}
   .feedMini .sig{min-height:0}
 }
+
+
+.goldLabLaunch{display:inline-flex;align-items:center;justify-content:center;padding:8px 11px;border:1px solid rgba(244,201,107,.55);border-radius:4px;background:linear-gradient(120deg,rgba(244,201,107,.16),rgba(244,201,107,.04));color:#f4d58d;text-decoration:none;font-size:9px;letter-spacing:.8px;white-space:nowrap;transition:transform .2s,border-color .2s,box-shadow .2s}
+.goldLabLaunch:hover{transform:translateY(-1px);border-color:#f4c96b;box-shadow:0 0 18px rgba(244,201,107,.15)}
+@media(max-width:900px){.goldLabLaunch{padding:7px 8px;font-size:8px}}
