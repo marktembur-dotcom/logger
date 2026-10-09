@@ -133,3 +133,16 @@ button.ghost,button.primary{font:inherit;font-size:10px;cursor:pointer;border-ra
 }
 /* On narrow screens there is not enough physical space for every panel at once;
    retain readable, non-overlapping cards and allow page scrolling rather than hiding content. */
+
+
+/* Make the three live MT5 signal cards visually distinct from the dashboard theme. */
+.feedMini.feedMini-win{--feed-accent:#20f2a0;border-color:rgba(32,242,160,.55);background:linear-gradient(135deg,rgba(8,65,48,.72),rgba(4,20,25,.96) 78%);box-shadow:inset 3px 0 0 #20f2a0,0 0 16px rgba(32,242,160,.08)}
+.feedMini.feedMini-win .fh>b,.feedMini.feedMini-win .meta b{color:#63ffc1}
+.feedMini.feedMini-xau5{--feed-accent:#28a7ff;border-color:rgba(40,167,255,.55);background:linear-gradient(135deg,rgba(7,40,91,.78),rgba(4,17,34,.97) 78%);box-shadow:inset 3px 0 0 #28a7ff,0 0 16px rgba(40,167,255,.08)}
+.feedMini.feedMini-xau5 .fh>b,.feedMini.feedMini-xau5 .idle,.feedMini.feedMini-xau5 .meta b{color:#71c7ff}
+.feedMini.feedMini-xau1{--feed-accent:#e45bff;border-color:rgba(228,91,255,.65);background:linear-gradient(135deg,rgba(70,17,91,.78),rgba(24,9,39,.97) 78%);box-shadow:inset 3px 0 0 #e45bff,0 0 18px rgba(228,91,255,.12)}
+.feedMini.feedMini-xau1 .fh>b,.feedMini.feedMini-xau1 .meta b{color:#f09aff}
+.feedMini .fh{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.feedMini .fh>b{letter-spacing:.4px}
+.feedMini .tag.confirmed{color:#fff;border-color:var(--feed-accent,#39ffb6);background:color-mix(in srgb,var(--feed-accent,#39ffb6) 24%,transparent)}
+.feedMini .sig{color:var(--feed-accent,#eaf6ff)}
