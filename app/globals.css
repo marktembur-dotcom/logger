@@ -189,3 +189,45 @@ button.ghost,button.primary{font:inherit;font-size:10px;cursor:pointer;border-ra
 @keyframes spotBarPulse{0%{transform:scaleY(.42);filter:brightness(.8);opacity:.7}100%{transform:scaleY(1);filter:brightness(1.55);opacity:1}}
 @media(max-width:1100px){.neuralContent{grid-template-columns:minmax(130px,.85fr) minmax(0,1.15fr)}.neuralMetrics{gap:3px;padding:5px}.neuralMetrics .neuralNode{padding:3px 4px}}
 @media(prefers-reduced-motion:reduce){.spark i,.miniBars i{animation-duration:2.5s;}}
+
+/* Dashboard polish: fill unused card height with mirrored, color-distinct live bar displays. */
+.spotPanel .panelBody,.latPanel .panelBody{display:flex;flex-direction:column;min-height:0;gap:5px}
+.barStage{position:relative;display:grid;grid-template-rows:minmax(0,1fr) minmax(0,.42fr);flex:1;min-height:28px;overflow:hidden;margin-top:3px;border-bottom:1px solid var(--line2);background:linear-gradient(180deg,transparent 0%,rgba(255,255,255,.018) 100%)}
+.barStage .miniBars,.barStage .spark{height:auto;min-height:0;min-width:0;width:100%;margin:0;gap:3px;align-items:flex-end;overflow:hidden}
+.barStage .miniBars i,.barStage .spark i{min-height:3px;border-radius:2px 2px 0 0}
+.barStage .spotBars i{background:linear-gradient(to top,rgba(240,92,255,.25),#f05cff 70%,#ffb4ff);box-shadow:0 0 7px rgba(240,92,255,.2)}
+.barStage .spark i{background:linear-gradient(to top,rgba(40,167,255,.2),#28a7ff 68%,#a4e5ff);box-shadow:0 0 6px rgba(40,167,255,.18)}
+.barStage .barReflection{align-items:flex-start;opacity:.35;transform:perspective(90px) rotateX(180deg);mask-image:linear-gradient(to bottom,rgba(0,0,0,.8),transparent 90%);-webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.8),transparent 90%);border-top:1px solid rgba(255,255,255,.04)}
+.barStage .barReflection i{transform-origin:top;animation-name:reflectionPulse;filter:saturate(.8);border-radius:0 0 2px 2px}
+@keyframes reflectionPulse{0%{transform:scaleY(.38);opacity:.32}100%{transform:scaleY(1);opacity:.7}}
+/* Resolution funnel becomes a full-height three-stage instrument rather than a tiny static graphic. */
+.funnelPanel .funnelBody{display:flex;flex-direction:column;gap:7px;padding:9px 10px 7px;background:radial-gradient(ellipse at 50% 100%,color-mix(in srgb,var(--c4) 9%,transparent),transparent 70%)}
+.funnelSummary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 8px;border:1px solid color-mix(in srgb,var(--c4) 25%,transparent);border-radius:4px;background:linear-gradient(90deg,color-mix(in srgb,var(--c4) 10%,transparent),transparent)}
+.funnelSummary>span,.funnelFoot{font-size:8px;letter-spacing:.8px;color:var(--muted)}
+.funnelSummary>b{font-family:"Space Grotesk",sans-serif;font-size:15px;color:var(--c4);white-space:nowrap}
+.funnelSummary b small{font-family:"IBM Plex Mono",monospace;font-size:7px;font-weight:400;color:var(--muted)}
+.funnelFlow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:1;min-height:0;align-items:stretch}
+.funnelStep{position:relative;display:flex;flex-direction:column;justify-content:center;gap:9px;min-width:0;padding:9px 8px;border:1px solid var(--line);border-radius:5px;background:linear-gradient(160deg,rgba(255,255,255,.035),rgba(0,0,0,.12));overflow:hidden}
+.funnelStep:after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;opacity:.85}
+.earlyStep{border-color:color-mix(in srgb,var(--c1) 35%,transparent)}.earlyStep:after{background:var(--c1)}
+.partialStep{border-color:color-mix(in srgb,var(--c4) 35%,transparent)}.partialStep:after{background:var(--c4)}
+.confirmedStep{border-color:color-mix(in srgb,var(--c2) 35%,transparent)}.confirmedStep:after{background:var(--c2)}
+.funnelStepHead{display:flex;flex-direction:column;gap:6px}
+.funnelStepHead span{display:flex;align-items:center;gap:5px;font-size:8px;letter-spacing:.5px;color:var(--muted);white-space:nowrap}
+.funnelStepHead span i,.funnelFoot>span:last-child i{width:6px;height:6px;display:inline-block;border-radius:50%;background:var(--c1);box-shadow:0 0 7px currentColor}
+.partialStep .funnelStepHead span i{background:var(--c4)}.confirmedStep .funnelStepHead span i{background:var(--c2)}
+.funnelStepHead>b{font-family:"Space Grotesk",sans-serif;font-size:clamp(17px,1.6vw,25px);line-height:1;color:var(--c1)}
+.partialStep .funnelStepHead>b{color:var(--c4)}.confirmedStep .funnelStepHead>b{color:var(--c2)}
+.funnelTrack{height:5px;width:100%;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden}
+.funnelTrack i{display:block;height:100%;min-width:0;border-radius:4px;background:linear-gradient(90deg,var(--c1),color-mix(in srgb,var(--c1) 55%,white));box-shadow:0 0 10px color-mix(in srgb,var(--c1) 35%,transparent);transition:width .45s ease}
+.partialStep .funnelTrack i{background:linear-gradient(90deg,var(--c4),#fff0a8);box-shadow:0 0 10px color-mix(in srgb,var(--c4) 30%,transparent)}
+.confirmedStep .funnelTrack i{background:linear-gradient(90deg,var(--c2),#b7ffd4);box-shadow:0 0 10px color-mix(in srgb,var(--c2) 30%,transparent)}
+.funnelStep>small{font-size:7px;color:var(--muted);line-height:1.3}
+.funnelConnector{display:none}
+.funnelFoot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:5px;border-top:1px solid var(--line);font-size:7px}
+.funnelFoot>span:last-child{display:flex;align-items:center;gap:5px;color:var(--c2)}
+.funnelFoot>span:last-child i{background:var(--c2);animation:funnelLive 1.2s ease-in-out infinite alternate}
+@keyframes funnelLive{from{opacity:.35;box-shadow:0 0 2px var(--c2)}to{opacity:1;box-shadow:0 0 9px var(--c2)}}
+@media(max-width:1100px){.barStage{min-height:34px}.funnelStep{padding:7px 5px;gap:7px}.funnelPanel .funnelBody{gap:5px}}
+@media(max-width:740px){.funnelFlow{gap:4px}.funnelStep{padding:6px 4px}.funnelStepHead span{font-size:7px}.funnelStep>small{font-size:6px}.funnelFoot{font-size:6px}}
+@media(prefers-reduced-motion:reduce){.funnelFoot>span:last-child i{animation:none}.funnelTrack i{transition:none}}
