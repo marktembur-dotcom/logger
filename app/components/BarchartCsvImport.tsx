@@ -139,13 +139,26 @@ export default function BarchartCsvImport() {
   }
   function read(file: File) {
     const reader = new FileReader();
-    reader.onload = () => {
+    setMsg("Reading and saving CSV…");
+    reader.onload = async () => {
       try {
         const rows = parseCsv(String(reader.result || ""));
-        window.dispatchEvent(new CustomEvent("barchart-csv", { detail: { rows, source: file.name } }));
-        setMsg(rows.length + " rows imported");
+        const response = await fetch("/api/barchart/import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          body: JSON.stringify({ sourceFile: file.name, rows }),
+        });
+        const result = await response.json();
+        if (!response.ok || !result?.ok || !result?.import) {
+          throw new Error(result?.error || "Supabase could not save this import.");
+        }
+        window.dispatchEvent(new CustomEvent("barchart-csv", {
+          detail: { rows: result.import.rows, source: result.import.sourceFile, importedAt: result.import.importedAt },
+        }));
+        setMsg(`${rows.length} rows saved to Supabase`);
       } catch (e) {
-        setMsg(e instanceof Error ? e.message : "Could not read CSV");
+        setMsg(e instanceof Error ? e.message : "Could not save CSV");
       }
     };
     reader.readAsText(file);
