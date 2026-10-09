@@ -27,7 +27,8 @@ function fmt(n: number, d = 1) { return Number(n || 0).toLocaleString(undefined,
 function tierTag(t?: string) { if (t === "confirmed") return "tag confirmed"; if (t === "partial") return "tag partial"; if (t === "early") return "tag early"; return "tag watch"; }
 function ago(iso?: string) { if (!iso) return "—"; const ms = Date.now() - new Date(iso).getTime(); if (ms < 0) return "0s"; if (ms < 60000) return Math.floor(ms / 1000) + "s"; if (ms < 3600000) return Math.floor(ms / 60000) + "m"; return Math.floor(ms / 3600000) + "h"; }
 function FeedMini({ title, feed }: { title: string; feed?: Mt5Event }) {
-  return (<div className={"feedMini " + (feed ? "on" : "")}><div className="fh"><b>{title}</b><span className={tierTag(feed?.tier)}>{feed?.tier?.toUpperCase() || "IDLE"}</span></div>{feed ? (<><div className={"sig " + (feed.side === "buy" ? "sigBuy" : feed.side === "sell" ? "sigSell" : "")}>{feed.signal}</div><div className="meta"><span>PX<b>{fmt(feed.price, 2)}</b></span><span>TF<b>{feed.tf || "—"}</b></span><span>T<b>{ago(feed.receivedAt || feed.time)}</b></span></div></>) : (<div className="idle">Waiting for MT5…</div>)}</div>);
+  const tone = title === "WIN" ? "feedMini-win" : title === "XAU 5M" ? "feedMini-xau5" : "feedMini-xau1";
+  return (<div className={"feedMini " + tone + (feed ? " on" : "")}><div className="fh"><b>{title}</b><span className={tierTag(feed?.tier)}>{feed?.tier?.toUpperCase() || "IDLE"}</span></div>{feed ? (<><div className={"sig " + (feed.side === "buy" ? "sigBuy" : feed.side === "sell" ? "sigSell" : "")}>{feed.signal}</div><div className="meta"><span>PX<b>{fmt(feed.price, 2)}</b></span><span>TF<b>{feed.tf || "—"}</b></span><span>T<b>{ago(feed.receivedAt || feed.time)}</b></span></div></>) : (<div className="idle">Waiting for MT5…</div>)}</div>);
 }
 const defaultCustom = { c1: "#39ffb6", c2: "#7dff6a", c3: "#5ec8ff", c4: "#ffe566", c5: "#ff4d9a", c6: "#c77dff" };
 
