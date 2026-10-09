@@ -240,3 +240,9 @@ button.ghost,button.primary{font:inherit;font-size:10px;cursor:pointer;border-ra
 .funnelTrack{flex:0 0 5px;}
 .funnelStep>small{display:block;font-size:clamp(7px,.62vw,8px);line-height:1.35;overflow-wrap:anywhere;}
 @media(max-width:740px){.funnelStep{padding:7px 5px;gap:6px}.funnelStepHead span{font-size:7px;letter-spacing:0}.funnelStepHead>b{font-size:16px}.funnelStep>small{font-size:7px}}
+/* Prevent the funnel descriptions from being clipped at short dashboard heights. */
+.funnelStep{justify-content:flex-start;gap:5px;padding:7px 6px;overflow:visible;}
+.funnelStepHead{flex:0 0 auto;}
+.funnelTrack{flex:0 0 4px;height:4px;margin-top:1px;}
+.funnelStep>small{flex:0 0 auto;min-height:2.7em;line-height:1.35;font-size:clamp(7px,.62vw,8px);white-space:normal;overflow:visible;}
+@media (min-width:1101px) and (max-height:740px){.funnelPanel .funnelBody{gap:4px;padding:5px 6px}.funnelSummary{padding:3px 6px}.funnelStep{gap:4px;padding:5px 5px}.funnelStep>small{font-size:7px;min-height:2.7em;line-height:1.35}.funnelFoot{padding-top:3px}}
