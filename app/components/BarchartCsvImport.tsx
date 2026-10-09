@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type ImportedRow = {
   symbol: string; type: string; strike: number; bid: number; ask: number; last: number;
@@ -127,6 +127,20 @@ function parseCsv(text: string): ImportedRow[] {
 export default function BarchartCsvImport() {
   const input = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState("");
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/barchart/import", { cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok || !result?.ok) throw new Error(result?.error || "Could not load latest import");
+        if (!cancelled && result.import) {
+          const when = result.import.importedAt ? new Date(result.import.importedAt).toLocaleString() : "saved";
+          setMsg(`Latest import: ${result.import.rowCount} rows · ${when}`);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
   function open() {
     window.open(
       "https://www.barchart.com/futures/quotes/GC*0/volatility-greeks?futuresOptionsView=merged",
