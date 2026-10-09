@@ -52,3 +52,84 @@ button.ghost,button.primary{font:inherit;font-size:10px;cursor:pointer;border-ra
 .sideMid{display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:8px}.sideMidSpot{font-family:"Space Grotesk",sans-serif;font-size:16px;font-weight:700;color:var(--c1)}.sideMidLabel{font-size:9px;color:var(--muted)}.sideMidTick{width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;color:var(--muted)}.sideMidTick i{display:block;height:3px;border-radius:2px;background:var(--c1);opacity:.5}
 @media(max-width:1100px){.mainGrid{grid-template-columns:1fr 1fr}.neuralPanel{grid-column:1/-1;min-height:280px}.centerSplit{grid-template-columns:1fr}html,body{overflow:auto}.cc{height:auto;min-height:100dvh}}
 @media(max-width:900px){.chipRow{display:none}.mainGrid{grid-template-columns:1fr}.tapePanel{grid-column:1/-1}.feedStrip{grid-template-columns:1fr}.sideGrid{grid-template-columns:1fr}.sideMid{display:none}.glassDrawer{width:96vw;max-height:92vh}.glassTableHead,.glassRow{grid-template-columns:32px 64px 48px 52px 1fr;font-size:12px}.glassTableHead span:nth-child(n+6),.glassRow span:nth-child(n+6){display:none}}
+
+/* Keep the full trading dashboard visible on desktop and laptop viewports.
+   Compact card spacing as available height shrinks, instead of clipping card contents. */
+@media (min-width:1101px) and (max-height:900px) {
+  .cc { grid-template-rows: 34px 28px minmax(0,1fr) 22px; }
+  .mainGrid { gap: 4px; padding: 4px; }
+  .panelHead { padding: 4px 7px; }
+  .panelBody { padding: 5px 7px; }
+  .enginePnl { font-size: 19px; margin: 2px 0 5px; }
+  .statGrid { gap: 3px; }
+  .statGrid div { padding: 4px 5px; }
+  .statGrid b { font-size: 11px; }
+  .bigPrice { font-size: 22px; margin: 1px 0 4px; }
+  .miniBars { height: 32px; margin-top: 4px; }
+  .spark { height: 25px; margin-top: 4px; }
+  .leadRow { padding: 3px 0; }
+  .neuralHead, .treeHead { padding: 4px 7px; }
+  .neuralNodes { padding: 6px 8px; }
+  .neuralNode { padding: 3px 5px; }
+  .feedStrip { gap: 3px; padding: 3px 5px 4px; }
+  .feedMini { padding: 4px 5px; }
+  .funnelViz { height: 40px; margin: 3px 0; }
+  .funnelStats { gap: 3px; }
+  .funnelStats div { padding: 4px; }
+  .funnelStats b { font-size: 12px; }
+  .tapeTable th { padding: 3px 4px; }
+  .tapeTable td { padding: 3px 4px; }
+}
+@media (min-width:1101px) and (max-height:740px) {
+  .cc { grid-template-rows: 30px 25px minmax(0,1fr) 20px; }
+  .topStrip { gap: 6px; padding: 0 8px; }
+  .brandMark { width: 23px; height: 23px; }
+  .brandTitle { font-size: 11px; letter-spacing: .8px; }
+  .brandSub { font-size: 8px; }
+  .topMeta { gap: 5px; font-size: 9px; }
+  .topMeta b { font-size: 12px; }
+  .iconBtn { padding: 3px 6px; font-size: 9px; }
+  .importBar { padding: 0 8px; gap: 6px; }
+  button.ghost, button.primary { padding: 3px 7px; font-size: 9px; }
+  .mainGrid { gap: 3px; padding: 3px; }
+  .panelHead { padding: 3px 5px; gap: 4px; }
+  .panelHead b { font-size: 9px; letter-spacing: .5px; }
+  .panelHead small { font-size: 8px; }
+  .panelBody { padding: 3px 5px; }
+  .enginePnl { font-size: 16px; margin: 1px 0 3px; }
+  .statGrid { gap: 2px; }
+  .statGrid div { padding: 2px 4px; }
+  .statGrid span { font-size: 7px; }
+  .statGrid b { font-size: 10px; margin-top: 1px; }
+  .bigPrice { font-size: 18px; margin: 0 0 2px; }
+  .miniBars { height: 22px; margin-top: 2px; }
+  .latBig { font-size: 16px; }
+  .spark { height: 17px; margin-top: 2px; }
+  .leadRow { grid-template-columns: 20px minmax(0,1fr) auto; gap: 3px; padding: 2px 0; font-size: 9px; }
+  .wireLine { font-size: 8px; line-height: 1.25; padding: 2px 0; }
+  .neuralHead, .treeHead { padding: 3px 5px; }
+  .neuralStage { min-height: 0; }
+  .neuralNodes { padding: 4px 5px; }
+  .neuralNode { padding: 2px 4px; }
+  .neuralNode span { font-size: 7px; }
+  .neuralNode b { font-size: 9px; }
+  .feedStrip { gap: 2px; padding: 2px 3px; }
+  .feedMini { padding: 3px 4px; }
+  .feedMini .sig { font-size: 9px; }
+  .feedMini .meta { gap: 4px; font-size: 7px; }
+  .feedMini .idle { font-size: 8px; padding: 2px 0; }
+  .levelsMini { font-size: 8px; }
+  .levelsMini .lv { grid-template-columns: 18px 40px 26px minmax(0,1fr); gap: 2px; padding: 2px 0; }
+  .tapeTable { font-size: 8px; }
+  .tapeTable th { font-size: 8px; padding: 2px 3px; }
+  .tapeTable td { padding: 2px 3px; }
+  .funnelViz { height: 28px; margin: 2px 0; }
+  .funnelStats { gap: 2px; }
+  .funnelStats div { padding: 2px; }
+  .funnelStats span { font-size: 7px; }
+  .funnelStats b { font-size: 10px; margin-top: 1px; }
+  .footStrip { padding: 0 7px; font-size: 8px; }
+  .footMetrics { gap: 7px; }
+}
+/* On narrow screens there is not enough physical space for every panel at once;
+   retain readable, non-overlapping cards and allow page scrolling rather than hiding content. */
