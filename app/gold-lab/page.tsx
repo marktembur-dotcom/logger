@@ -9,7 +9,7 @@ type Snapshot = { live?: boolean; rows?: BarRow[]; fetchedAt?: string; source?: 
 type MT5State = { live?: boolean; feeds?: Record<string, FeedEvent>; events?: FeedEvent[] };
 
 const nfmt=(v:number,d=2)=>Number(v||0).toLocaleString(undefined,{maximumFractionDigits:d});
-const clean=(v:number)=>Number.isFinite(v)?v:0;
+const clean=(v:number|undefined)=>typeof v==="number"&&Number.isFinite(v)?v:0;
 
 export default function GoldLab(){
  const [csv,setCsv]=useState<Snapshot>({});
