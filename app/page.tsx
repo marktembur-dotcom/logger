@@ -43,7 +43,7 @@ export default function Home() {
 
   useEffect(() => { try { const t = localStorage.getItem("gc-theme") as ThemeName | null; const c = localStorage.getItem("gc-custom"); if (t) setTheme(t); if (c) setCustom({ ...defaultCustom, ...JSON.parse(c) }); } catch {} }, []);
   useEffect(() => { document.documentElement.setAttribute("data-theme", theme); if (theme === "custom") { const root = document.documentElement.style; root.setProperty("--custom-c1", custom.c1); root.setProperty("--custom-c2", custom.c2); root.setProperty("--custom-c3", custom.c3); root.setProperty("--custom-c4", custom.c4); root.setProperty("--custom-c5", custom.c5); root.setProperty("--custom-c6", custom.c6); } try { localStorage.setItem("gc-theme", theme); localStorage.setItem("gc-custom", JSON.stringify(custom)); } catch {} }, [theme, custom]);
-  useEffect(() => { const h = (e: any) => { const rows = e.detail?.rows || []; if (rows.length) setData({ live: true, source: "Barchart CSV Download", fetchedAt: new Date().toISOString(), rows, error: "" }); }; window.addEventListener("barchart-csv", h); return () => window.removeEventListener("barchart-csv", h); }, []);
+  useEffect(() => { const h = (e: any) => { const rows = e.detail?.rows || []; if (rows.length) { const next = { live: true, source: "Barchart CSV Download", fetchedAt: new Date().toISOString(), rows, error: "" }; setData(next); try { localStorage.setItem("gc-barchart-cache", JSON.stringify(next)); } catch {} } }; window.addEventListener("barchart-csv", h); return () => window.removeEventListener("barchart-csv", h); }, []);
   useEffect(() => {
     try { const cached = localStorage.getItem("gc-mt5-cache"); if (cached) { const parsed = JSON.parse(cached); if (parsed?.feeds || parsed?.events) setMt5({ live: !!parsed.live || Object.keys(parsed.feeds || {}).length > 0, feeds: parsed.feeds || {}, events: parsed.events || [] }); } } catch {}
     let stop = false;
@@ -120,7 +120,7 @@ export default function Home() {
           <span className="chip on">ZONE ENGINE</span><span className="chip">EARLY / PARTIAL / CONFIRMED</span><span className="chip amber">XAUUSD FOCUS</span>
         </div>
         <div className="topMeta"><span>XAU</span><b>{price ? fmt(price, 2) : "—"}</b><span>{utc}</span>
-          <button className="iconBtn" type="button" onClick={() => setDetailOpen(true)}>DATA</button>
+          <a className="goldLabLaunch" href="/gold-lab" target="_blank" rel="noreferrer">OPEN GOLD LAB ↗</a><button className="iconBtn" type="button" onClick={() => setDetailOpen(true)}>DATA</button>
           <button className="iconBtn" type="button" onClick={() => setSettingsOpen(true)}>THEME</button>
         </div>
       </header>
