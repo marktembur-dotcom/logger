@@ -43,7 +43,51 @@ export default function Home() {
 
   useEffect(() => { try { const t = localStorage.getItem("gc-theme") as ThemeName | null; const c = localStorage.getItem("gc-custom"); if (t) setTheme(t); if (c) setCustom({ ...defaultCustom, ...JSON.parse(c) }); } catch {} }, []);
   useEffect(() => { document.documentElement.setAttribute("data-theme", theme); if (theme === "custom") { const root = document.documentElement.style; root.setProperty("--custom-c1", custom.c1); root.setProperty("--custom-c2", custom.c2); root.setProperty("--custom-c3", custom.c3); root.setProperty("--custom-c4", custom.c4); root.setProperty("--custom-c5", custom.c5); root.setProperty("--custom-c6", custom.c6); } try { localStorage.setItem("gc-theme", theme); localStorage.setItem("gc-custom", JSON.stringify(custom)); } catch {} }, [theme, custom]);
-  useEffect(() => { const h = (e: any) => { const rows = e.detail?.rows || []; if (rows.length) { const next = { live: true, source: "Barchart CSV Download", fetchedAt: new Date().toISOString(), rows, error: "" }; setData(next); try { localStorage.setItem("gc-barchart-cache", JSON.stringify(next)); } catch {} } }; window.addEventListener("barchart-csv", h); return () => window.removeEventListener("barchart-csv", h); }, []);
+  useEffect(() => {
+    const h = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      const rows = detail.rows || [];
+      if (rows.length) {
+        setData({
+          live: true,
+          source: detail.source || "Barchart CSV Download",
+          fetchedAt: detail.importedAt || new Date().toISOString(),
+          rows,
+          error: "",
+        });
+      }
+    };
+    window.addEventListener("barchart-csv", h);
+    return () => window.removeEventListener("barchart-csv", h);
+  }, []);
+  useEffect(() => {
+    let cancelled = false;
+    async function loadLatestImport() {
+      try {
+        const response = await fetch("/api/barchart/import", { cache: "no-store" });
+        const result = await response.json();
+        if (cancelled) return;
+        if (!response.ok || !result?.ok) throw new Error(result?.error || "Unable to load saved Barchart import");
+        const latest = result.import;
+        if (latest?.rows?.length) {
+          setData({
+            live: true,
+            source: latest.sourceFile || "Barchart CSV Download",
+            fetchedAt: latest.importedAt || "",
+            rows: latest.rows,
+            error: "",
+          });
+        }
+      } catch (error) {
+        if (!cancelled) setData((previous: any) => ({
+          ...previous,
+          error: error instanceof Error ? error.message : "Unable to load saved Barchart import",
+        }));
+      }
+    }
+    loadLatestImport();
+    return () => { cancelled = true; };
+  }, []);
   useEffect(() => {
     try { const cached = localStorage.getItem("gc-mt5-cache"); if (cached) { const parsed = JSON.parse(cached); if (parsed?.feeds || parsed?.events) setMt5({ live: !!parsed.live || Object.keys(parsed.feeds || {}).length > 0, feeds: parsed.feeds || {}, events: parsed.events || [] }); } } catch {}
     let stop = false;
@@ -64,8 +108,6 @@ export default function Home() {
     return () => { stop = true; clearInterval(id); };
   }, []);
   useEffect(() => { const id = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(id); }, []);
-  useEffect(() => { try { const cached = localStorage.getItem("gc-barchart-cache"); if (cached) { const parsed = JSON.parse(cached); if (parsed?.rows?.length) setData(parsed); } } catch {} }, []);
-
   const rows: Row[] = data.rows || [];
   const mt5Price = mt5.feeds.XAU5?.price || mt5.feeds.XAU1?.price || mt5.feeds.WIN?.price || 0;
   const price = rows.find((x) => x.baseLast)?.baseLast || mt5Price || 0;
