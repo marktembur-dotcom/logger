@@ -322,14 +322,14 @@ export default function NeuralShell({
       </div>
       <div className="neuralStage">
         <canvas ref={canvasRef} />
-        <div className="neuralNodes">
-          {nodes.slice(0, 8).map((n, i) => (
-            <div key={i} className={`neuralNode ${n.tone || "muted"}`}>
-              <span>{n.label}</span>
-              <b>{n.value}</b>
-            </div>
-          ))}
-        </div>
+      </div>
+      <div className="neuralMetrics" aria-label="Live signal metrics">
+        {nodes.slice(0, 8).map((n, i) => (
+          <div key={i} className={`neuralNode ${n.tone || "muted"}`}>
+            <span>{n.label}</span>
+            <b>{n.value}</b>
+          </div>
+        ))}
       </div>
     </div>
   );
