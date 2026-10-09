@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ingestMt5Event, type Mt5Source, type Mt5Tier } from "../../../lib/mt5Store";
+import { hasSupabaseAdminConfig, saveMt5Event } from "../../../lib/supabaseMt5Store";
 
 const SOURCES: Mt5Source[] = ["WIN", "XAU5", "XAU1"];
 const TIERS: Mt5Tier[] = ["early", "partial", "confirmed", "watch"];
@@ -23,6 +24,12 @@ export async function POST(req: Request) {
     }
     if (!authorized(req)) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
+    if (!hasSupabaseAdminConfig()) {
+      return NextResponse.json(
+        { ok: false, error: "Persistent storage is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel." },
+        { status: 503 }
+      );
     }
 
     const body = await req.json();
@@ -63,11 +70,15 @@ export async function POST(req: Request) {
       time: body.time ? String(body.time) : new Date().toISOString(),
     });
 
-    return NextResponse.json({ ok: true, event }, { headers: { "Cache-Control": "no-store" } });
+    await saveMt5Event(event);
+    return NextResponse.json(
+      { ok: true, persisted: true, event },
+      { headers: { "Cache-Control": "no-store" } }
+    );
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : "Invalid payload" },
-      { status: 400 }
+      { status: 503 }
     );
   }
 }
