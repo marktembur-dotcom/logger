@@ -231,3 +231,12 @@ button.ghost,button.primary{font:inherit;font-size:10px;cursor:pointer;border-ra
 @media(max-width:1100px){.barStage{min-height:34px}.funnelStep{padding:7px 5px;gap:7px}.funnelPanel .funnelBody{gap:5px}}
 @media(max-width:740px){.funnelFlow{gap:4px}.funnelStep{padding:6px 4px}.funnelStepHead span{font-size:7px}.funnelStep>small{font-size:6px}.funnelFoot{font-size:6px}}
 @media(prefers-reduced-motion:reduce){.funnelFoot>span:last-child i{animation:none}.funnelTrack i{transition:none}}
+/* Keep all resolution tiers readable in the compact funnel cards. */
+.funnelStep{justify-content:space-evenly;gap:6px;padding:8px 7px;}
+.funnelStepHead{flex-direction:row;align-items:center;justify-content:space-between;gap:4px;min-width:0;}
+.funnelStepHead span{min-width:0;gap:4px;font-size:clamp(7px,.68vw,9px);letter-spacing:.25px;line-height:1.2;}
+.funnelStepHead span i{flex:0 0 6px;}
+.funnelStepHead>b{flex:0 0 auto;font-size:clamp(16px,1.35vw,22px);line-height:1;}
+.funnelTrack{flex:0 0 5px;}
+.funnelStep>small{display:block;font-size:clamp(7px,.62vw,8px);line-height:1.35;overflow-wrap:anywhere;}
+@media(max-width:740px){.funnelStep{padding:7px 5px;gap:6px}.funnelStepHead span{font-size:7px;letter-spacing:0}.funnelStepHead>b{font-size:16px}.funnelStep>small{font-size:7px}}
