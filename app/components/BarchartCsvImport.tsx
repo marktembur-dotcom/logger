@@ -129,7 +129,7 @@ export default function BarchartCsvImport() {
   const [msg, setMsg] = useState("");
   function open() {
     window.open(
-      "https://www.barchart.com/futures/quotes/GCZ26/volatility-greeks/IY6V26?futuresOptionsView=split",
+      "https://www.barchart.com/futures/quotes/GC*0/volatility-greeks?futuresOptionsView=merged",
       "_blank",
       "noopener,noreferrer"
     );
