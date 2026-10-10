@@ -81,3 +81,26 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const id = new URL(request.url).searchParams.get("id");
+    if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      return NextResponse.json({ ok: false, error: "A valid import ID is required." }, { status: 400 });
+    }
+    const response = await fetch(endpoint(`barchart_imports?id=eq.${encodeURIComponent(id)}`), {
+      method: "DELETE",
+      headers: supabaseHeaders({ Prefer: "return=representation" }),
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error(`Supabase delete failed (${response.status}): ${detail.slice(0, 250)}`);
+    }
+    const deleted = await response.json();
+    if (!Array.isArray(deleted) || deleted.length === 0) return NextResponse.json({ ok: false, error: "Import not found or already deleted." }, { status: 404 });
+    return NextResponse.json({ ok: true, deletedId: id }, { headers: { "Cache-Control": "no-store, max-age=0" } });
+  } catch (error) {
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Unable to delete Barchart import" }, { status: 503, headers: { "Cache-Control": "no-store, max-age=0" } });
+  }
+}
