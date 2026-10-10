@@ -256,22 +256,52 @@ export default function BarchartCsvImport() {
         {msg && <span className="importMsg">{msg}</span>}
       </div>
       {savedOpen && (
-        <div className="savedImportsPanel" style={{ flexBasis: "100%", width: "100%", marginTop: 10, padding: 10, border: "1px solid var(--line, rgba(255,255,255,.15))", borderRadius: 6 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <b>SUPABASE SAVED IMPORTS</b>
-            <small>Delete removes that CSV import and its rows from the database.</small>
-          </div>
-          {saved.length ? saved.map((item) => (
-            <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "7px 0", borderTop: "1px solid var(--line, rgba(255,255,255,.1))" }}>
-              <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>
-                <b>{item.sourceFile}</b>
-                <small style={{ display: "block", opacity: .7 }}>{item.rowCount} rows · {item.importedAt ? new Date(item.importedAt).toLocaleString() : "date unavailable"}</small>
-              </span>
-              <button className="ghost" disabled={busyId === item.id} onClick={() => removeSaved(item)} style={{ flexShrink: 0, borderColor: "rgba(255,100,100,.45)", color: "#ff9292" }}>
-                {busyId === item.id ? "Deleting…" : "Delete"}
-              </button>
+        <div className="savedImportsBackdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSavedOpen(false); }}>
+          <section className="savedImportsWindow" role="dialog" aria-modal="true" aria-label="Saved Barchart imports">
+            <header className="savedImportsHeader">
+              <div><small>DATA MANAGEMENT · BARCHART</small><h3>Saved imports <span>{saved.length}</span></h3></div>
+              <button className="savedImportsClose" onClick={() => setSavedOpen(false)} aria-label="Close saved imports">×</button>
+            </header>
+            <p className="savedImportsHint">Stored in Supabase. Deleting an import removes only that file and its rows.</p>
+            <div className="savedImportsList">
+              {saved.length ? saved.map((item) => (
+                <div className="savedImportRow" key={item.id}>
+                  <span className="savedImportGlyph">CSV</span>
+                  <span className="savedImportDetails">
+                    <b title={item.sourceFile}>{item.sourceFile}</b>
+                    <small>{item.rowCount.toLocaleString()} rows <i>·</i> {item.importedAt ? new Date(item.importedAt).toLocaleString() : "date unavailable"}</small>
+                  </span>
+                  <button className="savedImportDelete" disabled={busyId === item.id} onClick={() => removeSaved(item)}>
+                    {busyId === item.id ? "Deleting…" : "Delete"}
+                  </button>
+                </div>
+              )) : <div className="savedImportsEmpty">No saved Barchart imports found in Supabase.</div>}
             </div>
-          )) : <small>No saved Barchart imports found in Supabase.</small>}
+            <footer className="savedImportsFooter"><span>{saved.length} saved file{saved.length === 1 ? "" : "s"}</span><button className="savedImportsDone" onClick={() => setSavedOpen(false)}>Done</button></footer>
+          </section>
+          <style jsx>{`
+            .savedImportsBackdrop{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:22px;background:rgba(3,7,14,.78);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+            .savedImportsWindow{width:min(680px,calc(100vw - 32px));max-height:min(78vh,760px);display:flex;flex-direction:column;overflow:hidden;color:#e7edf5;background:linear-gradient(145deg,rgba(17,25,39,.99),rgba(8,13,23,.99));border:1px solid rgba(244,201,107,.3);border-radius:13px;box-shadow:0 24px 90px rgba(0,0,0,.62),inset 0 1px rgba(255,255,255,.045)}
+            .savedImportsHeader{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:20px 22px 15px;border-bottom:1px solid rgba(255,255,255,.08)}
+            .savedImportsHeader small{font-size:9px;letter-spacing:1.5px;color:#d9b86b}
+            .savedImportsHeader h3{margin:6px 0 0;font-size:20px;font-weight:550;letter-spacing:-.4px}
+            .savedImportsHeader h3 span{display:inline-grid;place-items:center;min-width:24px;height:22px;margin-left:6px;padding:0 6px;border-radius:5px;background:rgba(244,201,107,.12);color:#f4c96b;font-size:11px}
+            .savedImportsClose{width:32px;height:32px;border:1px solid rgba(255,255,255,.12);border-radius:7px;background:rgba(255,255,255,.035);color:#c6cfdb;font-size:23px;line-height:1;cursor:pointer}
+            .savedImportsHint{margin:0;padding:12px 22px;color:#929fb1;font-size:11px;line-height:1.5}
+            .savedImportsList{overflow:auto;min-height:90px;padding:0 22px;overscroll-behavior:contain}
+            .savedImportRow{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid rgba(255,255,255,.065)}
+            .savedImportGlyph{display:grid;place-items:center;flex:0 0 38px;height:38px;border:1px solid rgba(85,231,255,.18);border-radius:7px;background:rgba(85,231,255,.06);color:#76e7f4;font-size:9px;font-weight:700;letter-spacing:.5px}
+            .savedImportDetails{min-width:0;flex:1}
+            .savedImportDetails b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:550}
+            .savedImportDetails small{display:block;margin-top:5px;color:#8e9aab;font-size:10px;line-height:1.4}
+            .savedImportDetails i{padding:0 4px;color:#d9b86b;font-style:normal}
+            .savedImportDelete{flex-shrink:0;padding:7px 10px;border:1px solid rgba(255,112,112,.3);border-radius:6px;background:rgba(255,85,85,.06);color:#ff9b9b;font-size:10px;cursor:pointer}
+            .savedImportDelete:disabled{opacity:.5;cursor:wait}
+            .savedImportsEmpty{padding:36px 10px;text-align:center;color:#8d9aad;font-size:12px}
+            .savedImportsFooter{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 22px;border-top:1px solid rgba(255,255,255,.08);color:#8995a6;font-size:10px}
+            .savedImportsDone{padding:8px 16px;border:1px solid rgba(244,201,107,.35);border-radius:6px;background:rgba(244,201,107,.1);color:#f4d78e;font-size:11px;font-weight:600;cursor:pointer}
+            @media(max-width:520px){.savedImportsBackdrop{padding:10px}.savedImportsWindow{width:100%;max-height:84vh}.savedImportsHeader{padding:16px}.savedImportsHint{padding:10px 16px}.savedImportsList{padding:0 16px}.savedImportsFooter{padding:12px 16px}.savedImportRow{gap:8px}.savedImportGlyph{flex-basis:32px;height:32px}.savedImportDetails b{font-size:11px}.savedImportDelete{padding:7px}}
+          `}</style>
         </div>
       )}
     </div>
