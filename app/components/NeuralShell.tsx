@@ -189,6 +189,25 @@ export default function NeuralShell({
       ctx.lineWidth = 1.5 + energy * 1.5;
       ctx.strokeRect(padX, padY, bw, bh);
 
+      // Ambient resonance ring: keeps the signature circular effect alive even
+      // when no new MT5 event arrives. Its phase wraps smoothly with no reset flash.
+      const resonancePeriod = 6.4;
+      const resonance = (t % resonancePeriod) / resonancePeriod;
+      const ringRadius = resonance * Math.max(bw, bh) * 0.48;
+      const ringAlpha = Math.sin(Math.PI * resonance) * 0.24;
+      const ringX = padX + bw * (0.5 + 0.12 * Math.sin(t * 0.22));
+      const ringY = padY + bh * (0.5 + 0.08 * Math.cos(t * 0.18));
+      ctx.beginPath();
+      ctx.arc(ringX, ringY, ringRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = rgba(94, 200, 255, ringAlpha);
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(ringX, ringY, ringRadius * 0.72, 0, Math.PI * 2);
+      ctx.strokeStyle = rgba(57, 255, 182, ringAlpha * 0.45);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
       // Shockwaves from new notifications
       for (let i = st.shocks.length - 1; i >= 0; i--) {
         const sh = st.shocks[i];
@@ -272,11 +291,19 @@ export default function NeuralShell({
         ctx.fill();
       }
 
-      // Energy scan beam — faster when hot
-      const scanSpeed = 28 + energy * 70;
-      const scanX = padX + ((t * scanSpeed) % bw);
-      ctx.fillStyle = rgba(57, 255, 182, 0.03 + energy * 0.05);
-      ctx.fillRect(scanX - 10 - energy * 8, padY, 20 + energy * 16, bh);
+      // Soft-tailed scan ribbon. The beam wraps with a feathered trail so the
+      // loop feels continuous rather than a hard line reaching the edge and restarting.
+      const scanSpeed = 18 + energy * 34;
+      const scanX = padX + (((t * scanSpeed) % (bw + 56)) - 28);
+      const ribbonW = 58 + energy * 26;
+      const ribbon = ctx.createLinearGradient(scanX - ribbonW, 0, scanX + ribbonW, 0);
+      ribbon.addColorStop(0, rgba(57, 255, 182, 0));
+      ribbon.addColorStop(0.42, rgba(57, 255, 182, 0.018 + energy * 0.025));
+      ribbon.addColorStop(0.5, rgba(170, 255, 250, 0.08 + energy * 0.08));
+      ribbon.addColorStop(0.58, rgba(94, 200, 255, 0.018 + energy * 0.025));
+      ribbon.addColorStop(1, rgba(94, 200, 255, 0));
+      ctx.fillStyle = ribbon;
+      ctx.fillRect(Math.max(padX, scanX - ribbonW), padY, Math.min(padX + bw, scanX + ribbonW) - Math.max(padX, scanX - ribbonW), bh);
 
       // Activity meter strip at bottom of field
       const meterH = 3;
