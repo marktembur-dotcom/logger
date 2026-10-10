@@ -126,7 +126,7 @@ export default function Home() {
   useEffect(() => { const id = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(id); }, []);
   const rows: Row[] = data.rows || [];
   const mt5Price = mt5.feeds.XAU5?.price || mt5.feeds.XAU1?.price || mt5.feeds.WIN?.price || 0;
-  const price = rows.find((x) => x.baseLast)?.baseLast || mt5Price || 0;
+  const price = mt5Price || rows.find((x) => x.baseLast)?.baseLast || 0;
   const calls = rows.filter((x) => x.type.toLowerCase() === "call");
   const puts = rows.filter((x) => x.type.toLowerCase() === "put");
   const levels = useMemo(() => {
