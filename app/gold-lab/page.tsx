@@ -263,14 +263,29 @@ export default function GoldLab(){
     .labPrice>span{font-size:8px}
     .labPrice strong{font-size:clamp(21px,2vw,30px);line-height:1.05;margin:3px 0}
     .labPriceFoot{font-size:7px;gap:4px}
-    .labGrid{flex:1 1 auto;min-height:0;height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-auto-rows:minmax(0,1fr);gap:7px;overflow:hidden}
+    .labGrid{flex:1 1 auto;min-height:0;height:0;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.15fr) minmax(0,.85fr) minmax(0,.85fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-auto-rows:minmax(0,1fr);gap:7px;overflow:hidden}
     .labCard{min-width:0;min-height:0;height:100%;padding:8px 9px 7px;overflow:hidden;display:flex;flex-direction:column;gap:3px}
-    .labChart{grid-column:1;grid-row:1}
-    .labSignals{grid-column:2;grid-row:1}
-    .labBarchart{grid-column:3;grid-row:1}
+    .labChart{grid-column:1 / span 2;grid-row:1}
+    .labSignals{grid-column:3;grid-row:1}
+    .labBarchart{grid-column:4;grid-row:1}
     .labNeural{grid-column:1;grid-row:2;min-height:0}
     .labRecent{grid-column:2;grid-row:2;min-height:0}
-    .labConfluence{grid-column:3;grid-row:2;min-height:0}
+    .labConfluence{grid-column:3 / span 2;grid-row:2;min-height:0}
+    .labConfluence .confLayout{grid-template-columns:minmax(105px,.8fr) minmax(115px,1fr) minmax(140px,1.2fr);grid-template-rows:minmax(0,1fr);gap:6px}
+    .labConfluence .confSources{grid-column:auto;grid-template-columns:minmax(0,1fr);align-content:start;gap:4px}
+    .labConfluence .confSource{padding:5px;gap:2px}
+    .labConfluence .confSource b{font-size:9px}
+    .labConfluence .confSource span{font-size:7px}
+    .labConfluence .confSource small{font-size:8px}
+    .labConfluence .spiderStage svg{max-height:175px}
+    .labConfluence .confMatch{padding:4px}
+    .labConfluence .confMatch b{font-size:8px}
+    .labConfluence .confMatch small{font-size:7px}
+    .labConfluence .confMatch strong{font-size:9px}
+    .labConfluence .computeConsole{padding:5px}
+    .labConfluence .computeStage small,.labConfluence .computeStage span{font-size:6px}
+    .labConfluence .computeStage b{font-size:10px}
+    .labConfluence .computeTicker{font-size:6px}
     .labCardHead{margin-bottom:3px;gap:5px;min-width:0}
     .labCardHead small{font-size:7px;letter-spacing:.8px}
     .labCardHead h2{font-size:clamp(10px,.9vw,13px);line-height:1.15;margin:2px 0 0}
