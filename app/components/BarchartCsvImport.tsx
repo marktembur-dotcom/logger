@@ -44,25 +44,20 @@ function parseCsv(text: string, fileName = ""): ImportedRow[] {
 
   const header = rows[0].map(clean);
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const idx = (name: string, side: 0 | 1 = 0) => {
-    const target = norm(name) + (side === 1 ? "1" : "");
-    return header.findIndex((h) => norm(h) === target);
+  const findHeader = (names: string[], side: 0 | 1 = 0) => {
+    const wanted = names.map(norm);
+    return header.findIndex((h) => {
+      const key = norm(h);
+      if (side === 1) return wanted.some((name) => key === name + "1" || key === "put" + name || key === name + "put");
+      return wanted.some((name) => key === name);
+    });
   };
-  const findAny = (names: string[], side: 0 | 1 = 0) => {
-    for (const name of names) {
-      const i = idx(name, side);
-      if (i >= 0) return i;
-    }
-    return -1;
-  };
-
-  const strike = findAny(["Strike", "Strike Price"]);
-  const callType = findAny(["Type", "Option Type"]);
-  const putType = findAny(["Type", "Option Type"], 1);
+  const strike = findHeader(["Strike", "Strike Price"]);
+  const callType = findHeader(["Type", "Option Type"]);
+  const putType = findHeader(["Type", "Option Type"], 1);
   const pairedSides = putType >= 0;
   if (strike < 0 || callType < 0)
     throw new Error("This is not a Barchart Volatility & Greeks CSV: Strike/Type columns not found.");
-
   const expiryMatch = fileName.match(/exp-(\d{1,2})_(\d{1,2})_(\d{2,4})/i);
   const expiryMonth = expiryMatch ? Number(expiryMatch[1]) : 10;
   const expiryDay = expiryMatch ? Number(expiryMatch[2]) : 13;
@@ -73,19 +68,20 @@ function parseCsv(text: string, fileName = ""): ImportedRow[] {
   const dte = Math.max(0, Math.ceil((expiryDate.getTime() - Date.now()) / 86400000));
 
   function make(r: string[], side: 0 | 1): ImportedRow | null {
-    const typeCol = findAny(["Type", "Option Type"], side);
+    const findSide = (names: string[]) => findHeader(names, side);
+    const typeCol = side === 1 ? putType : callType;
     const type = clean(r[typeCol]).toLowerCase();
     if (type !== "call" && type !== "put") return null;
     const strikeV = n(r[strike]);
     if (!strikeV) return null;
-    const latest = findAny(["Latest", "Last", "Last Price"], side);
-    const iv = findAny(["IV", "Implied Volatility", "Volatility"], side);
-    const delta = findAny(["Delta"], side);
-    const gamma = findAny(["Gamma"], side);
-    const theta = findAny(["Theta"], side);
-    const vega = findAny(["Vega"], side);
-    const skew = findAny(["IV Skew", "Implied Volatility Skew"], side);
-    const time = findAny(["Last Trade", "Trade Time", "Time"], side);
+    const latest = findSide(["Latest", "Last", "Last Price"]);
+    const iv = findSide(["IV", "Implied Volatility", "Volatility"]);
+    const delta = findSide(["Delta"]);
+    const gamma = findSide(["Gamma"]);
+    const theta = findSide(["Theta"]);
+    const vega = findSide(["Vega"]);
+    const skew = findSide(["IV Skew", "Implied Volatility Skew"]);
+    const time = findSide(["Last Trade", "Trade Time", "Time"]);
     return {
       symbol: "GCZ26",
       type,
@@ -108,7 +104,6 @@ function parseCsv(text: string, fileName = ""): ImportedRow[] {
       baseLast: 0,
     };
   }
-
   const out: ImportedRow[] = [];
   for (let i = 1; i < rows.length; i++) {
     const call = make(rows[i], 0);
