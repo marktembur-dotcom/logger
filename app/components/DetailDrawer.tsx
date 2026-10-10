@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 
+type OptionRow = { symbol: string; type: string; strike: number; bid: number; ask: number; last: number; volume: number; openInterest: number; iv: number; ivSkew?: number; delta: number; gamma: number; theta: number; vega: number; dte: number; expiration: string; tradeTime: string; percentFromLast: number; baseLast: number; };
+type QualifiedZone = { strike: number; side: "BUY" | "SELL"; rulesPassed: number; matchedRules: string[]; delta: number; iv: number; gamma: number; theta: number; vega: number; ivSkew: number; distance: number; };
 type Level = {
   strike: number;
   score: number;
@@ -29,12 +31,18 @@ export default function DetailDrawer({
   levels,
   price,
   rowsCount,
+  rows,
+  buyZones,
+  sellZones,
 }: {
   open: boolean;
   onClose: () => void;
   levels: Level[];
   price: number;
   rowsCount: number;
+  rows: OptionRow[];
+  buyZones: QualifiedZone[];
+  sellZones: QualifiedZone[];
 }) {
   const [range, setRange] = useState<"atm" | "near" | "wide" | "all">("near");
   const [view, setView] = useState<"table" | "side" | "qualified">("side");
@@ -102,7 +110,23 @@ export default function DetailDrawer({
         </div>
 
         <div className="glassBody">
-          {view === "side" ? (
+          {view === "qualified" ? (
+            <div className="qualifiedZoneGrid">
+              {([{ side: "BUY" as const, zones: buyZones }, { side: "SELL" as const, zones: sellZones }]).map(({ side, zones }) => {
+                const selected = new Set(zones.map((zone) => zone.strike));
+                const selectedRows = rows.filter((row) => selected.has(row.strike) && row.type.toLowerCase() === (side === "BUY" ? "call" : "put"));
+                return <section className={"qualifiedZonePanel " + (side === "BUY" ? "qualifiedBuy" : "qualifiedSell")} key={side}>
+                  <div className="qualifiedZoneHead"><b>{side} QUALIFIED ZONES</b><span>{zones.length} zones · {selectedRows.length} rows</span></div>
+                  <div className="qualifiedZoneTableWrap"><table className="qualifiedZoneTable">
+                    <thead><tr><th>RANK</th><th>RULES</th><th>MATCHED RULES</th><th>SYMBOL</th><th>TYPE</th><th>STRIKE</th><th>BID</th><th>ASK</th><th>LAST</th><th>VOLUME</th><th>OPEN INTEREST</th><th>IV</th><th>IV SKEW</th><th>DELTA</th><th>GAMMA</th><th>THETA</th><th>VEGA</th><th>DTE</th><th>EXPIRATION</th><th>TRADE TIME</th><th>% FROM LAST</th><th>BASE LAST</th></tr></thead>
+                    <tbody>{zones.length ? zones.flatMap((zone, index) => selectedRows.filter((row) => row.strike === zone.strike).map((row) => <tr key={side + zone.strike + row.type}>
+                      <td>{String(index + 1).padStart(2, "0")}</td><td>{zone.rulesPassed}/6</td><td className="qualifiedMatched">{zone.matchedRules.join(" · ")}</td><td>{row.symbol || "—"}</td><td>{row.type.toUpperCase()}</td><td>{fmt(row.strike, 0)}</td><td>{fmt(row.bid, 4)}</td><td>{fmt(row.ask, 4)}</td><td>{fmt(row.last, 4)}</td><td>{fmt(row.volume, 0)}</td><td>{fmt(row.openInterest, 0)}</td><td>{fmt(row.iv, 4)}</td><td>{fmt(row.ivSkew ?? 0, 4)}</td><td>{fmt(row.delta, 4)}</td><td>{fmt(row.gamma, 6)}</td><td>{fmt(row.theta, 4)}</td><td>{fmt(row.vega, 4)}</td><td>{fmt(row.dte, 0)}</td><td>{row.expiration || "—"}</td><td>{row.tradeTime || "—"}</td><td>{fmt(row.percentFromLast, 4)}</td><td>{fmt(row.baseLast, 4)}</td>
+                    </tr>)) : <tr><td colSpan={22} className="qualifiedEmpty">No {side} zones currently qualify.</td></tr>}</tbody>
+                  </table></div>
+                </section>;
+              })}
+            </div>
+          ) : view === "side" ? (
             <div className="sideGrid">
               <div className="sideCol callCol">
                 <div className="sideColHead call">CALLS · BULLISH</div>
@@ -201,7 +225,7 @@ export default function DetailDrawer({
         </div>
 
         <div className="glassFoot">
-          <span>Click outside to retract</span>
+          <span>{view === "qualified" ? "Qualified rows only · scroll horizontally to see every CSV column" : "Click outside to retract"}</span>
           <span>
             Showing <b>{filtered.length}</b> of <b>{levels.length}</b> ranked levels
           </span>
