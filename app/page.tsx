@@ -6,8 +6,9 @@ import NeuralShell from "./components/NeuralShell";
 import DataFlowTree from "./components/DataFlowTree";
 import DetailDrawer from "./components/DetailDrawer";
 
-type Row = { symbol: string; type: string; strike: number; bid: number; ask: number; last: number; volume: number; openInterest: number; iv: number; delta: number; gamma: number; theta: number; vega: number; dte: number; expiration: string; tradeTime: string; percentFromLast: number; baseLast: number; };
-type Level = { strike: number; score: number; gamma: number; delta: number; callIv: number; putIv: number; dte: number; oi: number; volume: number; distance: number; side: "CALL" | "PUT"; label: string; };
+type Row = { symbol: string; type: string; strike: number; bid: number; ask: number; last: number; volume: number; openInterest: number; iv: number; ivSkew?: number; delta: number; gamma: number; theta: number; vega: number; dte: number; expiration: string; tradeTime: string; percentFromLast: number; baseLast: number; };
+type Level = { strike: number; score: number; gamma: number; delta: number; callIv: number; putIv: number; callSkew: number; putSkew: number; dte: number; oi: number; volume: number; distance: number; side: "CALL" | "PUT"; label: string; };
+type QualifiedZone = { strike: number; side: "BUY" | "SELL"; rulesPassed: number; matchedRules: string[]; delta: number; iv: number; gamma: number; theta: number; vega: number; ivSkew: number; distance: number; };
 type Mt5Event = { id: string; source: "WIN" | "XAU5" | "XAU1"; tier: "early" | "partial" | "confirmed" | "watch"; signal: string; symbol: string; tf: string; price: number; score?: number; confidence?: string; side?: "buy" | "sell"; entry?: number; sl?: number; tp?: number; zoneHigh?: number; zoneLow?: number; reason?: string; seq?: string; measuredProb?: number; time: string; receivedAt: string; };
 
 const empty = { live: false, rows: [] as Row[], error: "" };
@@ -21,7 +22,16 @@ function scoreRow(c: Row, p: Row, price: number): Level {
   const dist = Math.max(0, 1 - Math.abs(distance) / 30); const g = Math.min(1, gamma / (Math.max(c.gamma, p.gamma) || 1));
   const dteScore = dte <= 2 ? 1 : dte <= 3 ? 0.75 : dte <= 7 ? 0.35 : 0;
   const raw = 30 * g + 20 * atm + 15 * Math.min(1, Math.max(0, skew / 5)) + 15 * dteScore + 10 * Math.min(1, activity / 5) + 10 * dist;
-  return { strike: c.strike, score: Math.round(raw), gamma, delta: Math.abs(c.delta), callIv: c.iv, putIv: p.iv, dte, oi: Math.max(c.openInterest, p.openInterest), volume: Math.max(c.volume, p.volume), distance, side: skew >= 0 ? "PUT" : "CALL", label: gamma === c.gamma ? "Gamma Reaction" : "Gamma Zone" };
+  return { strike: c.strike, score: Math.round(raw), gamma, delta: Math.abs(c.delta), callIv: c.iv, putIv: p.iv, callSkew: c.ivSkew ?? 0, putSkew: p.ivSkew ?? 0, dte, oi: Math.max(c.openInterest, p.openInterest), volume: Math.max(c.volume, p.volume), distance, side: skew >= 0 ? "PUT" : "CALL", label: gamma === c.gamma ? "Gamma Reaction" : "Gamma Zone" };
+}
+function quantile(values: number[], q: number) {
+  const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+  if (!sorted.length) return Number.NaN;
+  const position = (sorted.length - 1) * q;
+  const lower = Math.floor(position);
+  const upper = Math.ceil(position);
+  if (lower === upper) return sorted[lower];
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower);
 }
 function fmt(n: number, d = 1) { return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: d }); }
 function tierTag(t?: string) { if (t === "confirmed") return "tag confirmed"; if (t === "partial") return "tag partial"; if (t === "early") return "tag early"; return "tag watch"; }
@@ -120,8 +130,64 @@ export default function Home() {
     return [...map.entries()].filter(([, x]) => x.c && x.p).map(([, x]) => scoreRow(x.c!, x.p!, price)).sort((a, b) => b.score - a.score);
   }, [rows, price]);
   const topLevels = levels.slice(0, 6);
+  const zoneResults = useMemo(() => {
+    if (!price || !rows.length) return { buy: [] as QualifiedZone[], sell: [] as QualifiedZone[], nearStrikes: [] as number[] };
+    const pairs = new Map<number, { c?: Row; p?: Row }>();
+    for (const row of rows) {
+      const pair = pairs.get(row.strike) || {};
+      if (row.type.toLowerCase() === "call") pair.c = row;
+      if (row.type.toLowerCase() === "put") pair.p = row;
+      pairs.set(row.strike, pair);
+    }
+    const nearby = [...pairs.entries()]
+      .filter(([, pair]) => pair.c && pair.p)
+      .map(([strike, pair]) => ({ strike, c: pair.c!, p: pair.p!, distance: strike - price }))
+      .sort((a, b) => Math.abs(a.distance) - Math.abs(b.distance) || a.strike - b.strike)
+      .slice(0, 10);
+
+    function qualify(side: "BUY" | "SELL"): QualifiedZone[] {
+      const candidates = nearby.map((item) => ({ ...item, row: side === "BUY" ? item.c : item.p }));
+      const valid = candidates.filter((item) => Number.isFinite(item.row.iv) && item.row.iv > 0);
+      if (!valid.length) return [];
+      const lowIv = quantile(valid.map((item) => item.row.iv), 0.25);
+      const lowVega = quantile(valid.map((item) => item.row.vega), 0.25);
+      const highGamma = quantile(valid.map((item) => item.row.gamma), 0.75);
+      const highAbsTheta = quantile(valid.map((item) => Math.abs(item.row.theta)), 0.75);
+      const zones: QualifiedZone[] = [];
+      for (const item of candidates) {
+        const row = item.row;
+        const matchedRules: string[] = [];
+        if (Math.abs(row.delta) >= 0.5) matchedRules.push("Delta");
+        if (row.iv > 0 && row.iv <= lowIv) matchedRules.push("Low IV");
+        if (row.gamma >= highGamma) matchedRules.push("High Gamma");
+        if (Math.abs(row.theta) >= highAbsTheta) matchedRules.push("More-negative Theta");
+        if (row.vega <= lowVega) matchedRules.push("Low Vega");
+        const skew = row.ivSkew;
+        if (typeof skew === "number" && (side === "BUY" ? skew > 0 : skew < 0)) matchedRules.push("IV Skew");
+        if (matchedRules.length >= 3) {
+          zones.push({
+            strike: item.strike,
+            side,
+            rulesPassed: matchedRules.length,
+            matchedRules,
+            delta: Math.abs(row.delta),
+            iv: row.iv,
+            gamma: row.gamma,
+            theta: row.theta,
+            vega: row.vega,
+            ivSkew: typeof skew === "number" ? skew : 0,
+            distance: item.distance,
+          });
+        }
+      }
+      return zones.sort((a, b) => b.rulesPassed - a.rulesPassed || Math.abs(a.distance) - Math.abs(b.distance) || a.strike - b.strike);
+    }
+    return { buy: qualify("BUY"), sell: qualify("SELL"), nearStrikes: nearby.map((item) => item.strike) };
+  }, [rows, price]);
+  const buyZones = zoneResults.buy;
+  const sellZones = zoneResults.sell;
   const atm = levels.length ? levels.reduce((a, b) => (Math.abs(a.distance) < Math.abs(b.distance) ? a : b)) : null;
-  const putSkew = atm ? atm.putIv - atm.callIv : 0;
+  const putSkew = atm ? atm.putSkew : 0;
   const maxGamma = Math.max(...topLevels.map((x) => x.gamma), 0.000001);
   const mt5Live = mt5.live || Object.keys(mt5.feeds).length > 0;
   const eventCount = mt5.events.length;
@@ -173,7 +239,7 @@ export default function Home() {
         <section className="panel engineCard accent-green"><div className="panelHead"><div><b>SIGNAL ENGINE</b><small>LIVE FEED</small></div><span className={"chip " + (mt5Live ? "green" : "")}>{mt5Live ? "LIVE" : "IDLE"}</span></div><div className="panelBody"><div className={"enginePnl " + (eventCount ? "" : "idle")}>{eventCount ? eventCount + " EVENTS" : "NO EVENTS"}</div><div className="statGrid"><div><span>CONFIRMED</span><b style={{ color: "var(--c2)" }}>{confirmedN}</b></div><div><span>PARTIAL</span><b style={{ color: "var(--c4)" }}>{partialN}</b></div><div><span>EARLY</span><b style={{ color: "var(--c1)" }}>{earlyN}</b></div><div><span>FEEDS</span><b>{Object.keys(mt5.feeds).length}/3</b></div><div><span>LATENCY</span><b>{latLabel}</b></div><div><span>LEVELS</span><b>{levels.length}</b></div></div></div></section>
         <section className="panel spotPanel accent-cyan"><div className="panelHead"><div><b>XAU / GC SPOT</b><small>{data.live ? "BARCHART" : mt5Price ? "MT5" : "AWAITING"}</small></div><span className={"chip " + (price ? "green" : "")}>{price ? "LIVE" : "—"}</span></div><div className="panelBody"><div className="bigPrice">{price ? fmt(price, 2) : "—"}</div><div className="statGrid"><div><span>ATM IV</span><b>{atm ? fmt((atm.callIv + atm.putIv) / 2, 2) + "%" : "—"}</b></div><div><span>PUT SKEW</span><b style={{ color: putSkew >= 0 ? "var(--c4)" : "var(--c1)" }}>{atm ? fmt(putSkew, 2) : "—"}</b></div></div><div className="barStage spotBarStage" aria-label="XAU GC spot gamma activity bars and reflection"><div className="miniBars spotBars">{topLevels.length ? topLevels.map((l, i) => (<i key={l.strike} style={{ height: Math.max(18, (l.gamma / maxGamma) * 100) + "%", animationDelay: `${(i % 6) * -0.19}s`, animationDuration: `${0.9 + (i % 4) * 0.16}s` }} />)) : Array.from({ length: 10 }).map((_, i) => (<i key={i} style={{ height: 6 + (i % 4) * 8 + "%", opacity: 0.25 }} />))}</div><div className="miniBars barReflection spotBars" aria-hidden="true">{topLevels.length ? topLevels.map((l, i) => (<i key={l.strike} style={{ height: Math.max(18, (l.gamma / maxGamma) * 100) + "%", animationDelay: `${(i % 6) * -0.19}s`, animationDuration: `${0.9 + (i % 4) * 0.16}s` }} />)) : Array.from({ length: 10 }).map((_, i) => (<i key={i} style={{ height: 6 + (i % 4) * 8 + "%", opacity: 0.25 }} />))}</div></div></div></section>
         <section className="panel latPanel accent-blue"><div className="panelHead"><div><b>FEED LATENCY</b><small>SIGNAL AGE · 3S POLL</small></div></div><div className="panelBody"><div className="latBig">{latLabel}</div><div className="statGrid"><div><span>BRIDGE</span><b style={{ color: mt5Live ? "var(--c2)" : "var(--c5)" }}>{mt5Live ? "UP" : "DOWN"}</b></div><div><span>CSV</span><b>{data.live ? "LOADED" : "OFF"}</b></div></div><div className="barStage latencyBarStage" aria-label="Animated feed latency bars and reflection"><div className="spark">{spark.map((v, i) => (<i key={i} style={{ height: Math.max(8, (v / 100) * 100) + "%", animationDelay: `${(i % 12) * -0.11}s`, animationDuration: `${0.72 + (i % 5) * 0.13}s` }} />))}</div><div className="spark barReflection" aria-hidden="true">{spark.map((v, i) => (<i key={i} style={{ height: Math.max(8, (v / 100) * 100) + "%", animationDelay: `${(i % 12) * -0.11}s`, animationDuration: `${0.72 + (i % 5) * 0.13}s` }} />))}</div></div></div></section>
-        <section className="panel leadPanel accent-amber"><div className="panelHead"><div><b>LEVEL LEADERS</b><small>GAMMA RANK</small></div><button type="button" className="iconBtn" onClick={() => setDetailOpen(true)}>MORE</button></div><div className="panelBody" style={{ padding: "2px 6px" }}>{topLevels.length ? topLevels.map((l, i) => (<div className="leadRow" key={l.strike}><span className="leadRank">{String(i + 1).padStart(2, "0")}</span><span className="leadStrike">{fmt(l.strike, 0)} <small style={{ color: "var(--muted)" }}>{l.side}</small></span><span className="leadScore">{l.score}</span></div>)) : (<div className="empty">Import CSV</div>)}</div></section>
+        <section className="panel leadPanel accent-amber"><div className="panelHead"><div><b>BUY ZONES</b><small>6 RULES · NEAREST 10 STRIKES</small></div><span className="chip green">{buyZones.length} QUALIFIED</span></div><div className="panelBody scroll" style={{ padding: "2px 6px" }}>{buyZones.length ? buyZones.map((z, i) => (<div className="leadRow" key={z.strike}><span className="leadRank">{String(i + 1).padStart(2, "0")}</span><span className="leadStrike">{fmt(z.strike, 0)} <small style={{ color: "var(--muted)" }}>{z.matchedRules.join(" · ")}</small></span><span className="leadScore">{z.rulesPassed}/6</span></div>)) : (<div className="empty">No BUY zones qualify — import current Barchart data</div>)}</div></section>
         <section className="panel wirePanel accent-pink"><div className="panelHead"><div><b>WIRE INSPECTOR</b><small>MT5 INGEST</small></div></div><div className="panelBody scroll">{mt5.events.length ? mt5.events.slice(0, 40).map((e) => (<div className="wireLine" key={e.id}><span className="ts">{new Date(e.receivedAt || e.time).toLocaleTimeString()}</span>{" "}<span className="src">{e.source}</span>{" "}<span className={"tier-" + e.tier}>{e.tier}</span>{" "}<span className="ok">{fmt(e.price, 2)}</span> {e.signal.slice(0, 40)}</div>)) : (<div className="empty">No ingest yet</div>)}</div></section>
         <section className="panel neuralPanel accent-multi"><div className="centerSplit"><div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
                 <NeuralShell
@@ -192,7 +258,7 @@ export default function Home() {
                   live={mt5Live}
                 />
                 <div className="feedStrip"><FeedMini title="WIN" feed={mt5.feeds.WIN} /><FeedMini title="XAU 5M" feed={mt5.feeds.XAU5} /><FeedMini title="XAU 1M" feed={mt5.feeds.XAU1} /></div></div><DataFlowTree feeds={treeFeeds} levels={topLevels.map((l) => ({ strike: l.strike, score: l.score, side: l.side }))} eventCount={eventCount} csvLive={!!data.live} price={price} /></div></section>
-        <section className="panel leadPanel2 accent-violet"><div className="panelHead"><div><b>TOP LEVELS</b><small>DETAIL</small></div><button type="button" className="iconBtn" onClick={() => setDetailOpen(true)}>MORE</button></div><div className="panelBody scroll levelsMini">{levels.length ? levels.slice(0, 12).map((l, i) => (<div className="lv" key={l.strike}><span>{String(i + 1).padStart(2, "0")}</span><b>{fmt(l.strike, 0)}</b><span style={{ color: "var(--c2)" }}>{l.score}</span><span>{l.side} · {l.dte}d</span></div>)) : (<div className="empty">No levels</div>)}</div></section>
+        <section className="panel leadPanel2 accent-violet"><div className="panelHead"><div><b>SELL ZONES</b><small>6 RULES · NEAREST 10 STRIKES</small></div><span className="chip">{sellZones.length} QUALIFIED</span></div><div className="panelBody scroll" style={{ padding: "2px 6px" }}>{sellZones.length ? sellZones.map((z, i) => (<div className="leadRow" key={z.strike}><span className="leadRank">{String(i + 1).padStart(2, "0")}</span><span className="leadStrike">{fmt(z.strike, 0)} <small style={{ color: "var(--muted)" }}>{z.matchedRules.join(" · ")}</small></span><span className="leadScore">{z.rulesPassed}/6</span></div>)) : (<div className="empty">No SELL zones qualify — import current Barchart data</div>)}</div></section>
         <section className="panel tapePanel accent-mint"><div className="panelHead"><div><b>EXECUTION TAPE · MT5</b><small>EARLY · PARTIAL · CONFIRMED</small></div><span className="chip on">{eventCount} ROWS</span></div><div className="panelBody scroll" style={{ padding: 0 }}>{mt5.events.length ? (<table className="tapeTable"><thead><tr><th>TIME</th><th>SRC</th><th>TIER</th><th>SIGNAL</th><th>PRICE</th><th>TF</th></tr></thead><tbody>{mt5.events.slice(0, 30).map((e) => (<tr key={e.id}><td>{new Date(e.receivedAt || e.time).toLocaleTimeString()}</td><td>{e.source}</td><td><span className={tierTag(e.tier)}>{e.tier}</span></td><td className={e.side === "buy" ? "sigBuy" : e.side === "sell" ? "sigSell" : ""}>{e.signal}</td><td>{fmt(e.price, 2)}</td><td>{e.tf || "—"}</td></tr>))}</tbody></table>) : (<div className="empty">Tape empty — waiting for MT5 signals</div>)}</div></section>
         <section className="panel funnelPanel accent-gold"><div className="panelHead"><div><b>RESOLUTION FUNNEL</b><small>EARLY → PARTIAL → CONFIRMED</small></div></div><div className="panelBody funnelBody"><div className="funnelSummary"><span>RESOLUTION PIPELINE</span><b>{earlyN + partialN + confirmedN}<small> SIGNAL EVENTS</small></b></div><div className="funnelFlow"><div className="funnelStep earlyStep"><div className="funnelStepHead"><span><i />EARLY</span><b>{earlyN}</b></div><div className="funnelTrack"><i style={{ width: Math.max(earlyN ? 8 : 0, (earlyN / Math.max(1, earlyN, partialN, confirmedN)) * 100) + "%" }} /></div><small>Initial detection</small></div><div className="funnelConnector"><span>↓</span></div><div className="funnelStep partialStep"><div className="funnelStepHead"><span><i />PARTIAL</span><b>{partialN}</b></div><div className="funnelTrack"><i style={{ width: Math.max(partialN ? 8 : 0, (partialN / Math.max(1, earlyN, partialN, confirmedN)) * 100) + "%" }} /></div><small>Developing signal</small></div><div className="funnelConnector"><span>↓</span></div><div className="funnelStep confirmedStep"><div className="funnelStepHead"><span><i />CONFIRMED</span><b>{confirmedN}</b></div><div className="funnelTrack"><i style={{ width: Math.max(confirmedN ? 8 : 0, (confirmedN / Math.max(1, earlyN, partialN, confirmedN)) * 100) + "%" }} /></div><small>Validated signal</small></div></div><div className="funnelFoot"><span>LIVE TIER COUNTS</span><span><i /> UPDATING FROM MT5</span></div></div></section>
       </div>
