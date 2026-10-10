@@ -9,6 +9,8 @@ type Level = {
   delta: number;
   callIv: number;
   putIv: number;
+  callSkew: number;
+  putSkew: number;
   dte: number;
   oi: number;
   volume: number;
@@ -163,7 +165,7 @@ export default function DetailDrawer({
                 <span>DELTA</span>
                 <span>CALL IV</span>
                 <span>PUT IV</span>
-                <span>SKEW</span>
+                <span>PUT SKEW</span>
                 <span>DTE</span>
                 <span>SIDE</span>
                 <span>LABEL</span>
@@ -182,8 +184,8 @@ export default function DetailDrawer({
                     <span>{l.delta.toFixed(3)}</span>
                     <span>{fmt(l.callIv, 2)}%</span>
                     <span>{fmt(l.putIv, 2)}%</span>
-                    <span style={{ color: l.putIv - l.callIv >= 0 ? "var(--c4)" : "var(--c1)" }}>
-                      {fmt(l.putIv - l.callIv, 2)}
+                    <span style={{ color: l.putSkew >= 0 ? "var(--c4)" : "var(--c1)" }}>
+                      {fmt(l.putSkew, 2)}
                     </span>
                     <span>{l.dte}</span>
                     <span>{l.side}</span>
