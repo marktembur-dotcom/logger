@@ -159,6 +159,38 @@ export default function GoldLab(){
   @media(prefers-reduced-motion:reduce){.spiderOrbit,.spiderLeg,.spiderCoreGlow,.spiderCoreDot,.resOrbit,.resWave,.resNode,.resCore,.resFoot i{animation:none!important}}
 \n  @media(max-width:850px){.goldLab{padding:0 10px 5px}.labHero{grid-template-columns:1fr .9fr;gap:12px;padding:10px 0}.labHero h1{font-size:clamp(24px,4vw,34px)}.labPrice{padding:10px}.labGrid{grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:7px}.labTop{height:44px;min-height:44px;gap:8px}.labWordmark{font-size:10px;gap:6px}.labWordmark small{display:none}.labBack{font-size:8px}.labClock{font-size:9px}.labCard{padding:9px}.labCardHead h2{font-size:13px}.labCardHead small{font-size:8px}.chartWrap{min-height:60px}.chartFoot{font-size:8px}.signalRow{padding:7px 0;gap:6px}.signalIcon{width:30px;height:28px}.dataStats div{padding:7px}.dataStats b{font-size:16px}.dataTableHead,.dataRow{font-size:9px;padding:6px 2px;gap:4px}.timelineRow{gap:5px;padding:5px 0}.labFooter{font-size:8px;line-height:1.3}.labFooter span:nth-child(2){display:none}} @media(max-width:520px){.labHero{grid-template-columns:1fr .8fr}.labEyebrow{font-size:8px}.labIntro{font-size:9px}.labPrice>span{font-size:7px}.labPrice strong{font-size:24px}.labPriceFoot{font-size:7px}.labCard{padding:7px}.labTag,.labLive{font-size:7px;padding:4px}.labCardHead{gap:4px}.labCardHead h2{font-size:11px}.signalText b,.signalRight b{font-size:9px}.signalText small{font-size:8px}.signalIcon{width:26px;height:25px;font-size:8px}.dataStats{gap:3px}.dataStats span{font-size:7px}.dataStats b{font-size:13px}.chartAxis{font-size:7px}}
   @media(prefers-reduced-motion:reduce){.labBackdrop i,.labOrb,.labCard,.labHero,.signalRow{animation:none!important}}
+
+  /* Gold Lab layout reset: preserve all six panels without collisions. */
+  .goldLab{height:100dvh;min-height:620px;overflow:hidden;padding:0 clamp(12px,2vw,28px) 6px;box-sizing:border-box}
+  .labTop{height:44px;min-height:44px;gap:10px}
+  .labHero{padding:8px 0 10px;gap:18px;grid-template-columns:1.25fr .75fr}
+  .labHero h1{font-size:clamp(25px,2.6vw,36px);margin:5px 0}
+  .labIntro{font-size:10px;line-height:1.35;margin-top:4px}
+  .labPrice{padding:8px 14px}
+  .labPrice strong{font-size:clamp(24px,2.3vw,34px);margin:4px 0}
+  .labGrid{grid-template-columns:minmax(0,1fr) minmax(0,.9fr) minmax(0,1fr);grid-template-rows:minmax(190px,.9fr) minmax(230px,1.1fr);gap:8px;flex:1 1 auto;min-height:0;overflow:hidden}
+  .labCard{padding:9px 10px 8px;border-radius:8px}
+  .labCardHead{margin-bottom:5px;gap:6px}
+  .labCardHead h2{font-size:13px;margin-top:3px}
+  .labCardHead small{font-size:8px;letter-spacing:1.2px}
+  .labTag,.labLive{font-size:7px;padding:4px 5px;letter-spacing:.5px}
+  .chartWrap{min-height:0}.chartFoot{font-size:8px;padding-top:5px;gap:5px}
+  .signalRow{padding:7px 0;grid-template-columns:32px minmax(0,1fr) auto;gap:7px}
+  .signalIcon{width:29px;height:28px;font-size:9px}
+  .signalText b,.signalRight b{font-size:10px}.signalText small{font-size:9px;line-height:1.3;margin-top:3px}.signalRight small{font-size:7px;margin-top:3px}.labSignalFoot{margin-top:6px;font-size:7px}
+  .dataStats{gap:4px;margin-bottom:6px}.dataStats div{padding:6px}.dataStats span{font-size:7px}.dataStats b{font-size:16px;margin-top:3px}
+  .dataTableHead,.dataRow{padding:5px 3px;gap:5px;font-size:9px}.dataTableHead{font-size:7px}
+  .timelineRow{padding:4px 0;gap:6px}.timelineRow div b,.timelineRow strong{font-size:8px}.timelineRow div small{font-size:8px;line-height:1.25;margin-top:2px}.timelineRow time{font-size:7px}
+  .confMeta{gap:6px;font-size:7px;margin-bottom:3px}.confLayout{grid-template-columns:minmax(48px,.52fr) minmax(80px,1fr) minmax(90px,1fr);gap:4px}
+  .confSource{padding:5px 4px;gap:2px}.confSource b{font-size:9px}.confSource span{font-size:6px}.confSource small{font-size:8px}.spiderStage svg{max-height:210px}
+  .confListHead{font-size:6px;padding:3px 0}.confMatch{padding:4px;gap:3px}.confMatch b{font-size:8px}.confMatch small{font-size:6px;margin-top:2px}.confMatch strong{font-size:9px}.confFoot{font-size:6px;margin-top:4px;padding-top:4px}
+  .resonanceField{min-height:0}.resonanceField svg{min-height:0}.resMetrics{gap:3px;margin-top:3px}.resMetrics div{padding:4px 3px}.resMetrics span{font-size:6px}.resMetrics b{font-size:7px;margin-top:3px}.resFoot{font-size:6px;margin-top:4px}
+  .labFooter{padding:5px 0 1px;font-size:8px;gap:8px}.labFooter a{font-size:8px}
+  @media(max-height:760px) and (min-width:1101px){.labTop{height:38px;min-height:38px}.labHero{padding:5px 0 7px}.labHero h1{font-size:27px}.labPrice strong{font-size:26px}.labGrid{grid-template-rows:minmax(170px,.85fr) minmax(205px,1.15fr);gap:6px}.labCard{padding:7px 8px 6px}.labCardHead{margin-bottom:3px}.dataStats{margin-bottom:3px}.dataStats div{padding:4px}.signalRow{padding:5px 0}}
+  @media(max-width:1100px){.goldLab{height:auto;min-height:100dvh;overflow:visible;padding:0 14px 8px}.labGrid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:minmax(250px,auto);overflow:visible;flex:none}.labConfluence,.labNeural{grid-column:span 2;min-height:280px}.labChart,.labSignals,.labBarchart,.labRecent{grid-column:span 1;min-height:250px}.resonanceField{min-height:125px}.resonanceField svg{min-height:125px}.labFooter{margin-top:6px}}
+  @media(max-width:600px){.goldLab{padding:0 10px 10px}.labTop{height:42px;min-height:42px}.labWordmark{font-size:9px;letter-spacing:1px}.labWordmark small{display:none}.labHero{grid-template-columns:1fr;gap:8px;padding:10px 0}.labHero h1{font-size:30px}.labPrice{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;padding:8px 10px}.labPrice>span{grid-column:1}.labPrice strong{grid-column:2;grid-row:1/3;font-size:25px;margin:0}.labPriceFoot{grid-column:1;font-size:8px}.labGrid{grid-template-columns:minmax(0,1fr);grid-auto-rows:auto;gap:8px}.labCard,.labChart,.labSignals,.labBarchart,.labRecent,.labConfluence,.labNeural{grid-column:1;min-height:245px}.labConfluence{min-height:330px}.labNeural{min-height:275px}.confLayout{grid-template-columns:58px minmax(100px,.9fr) minmax(100px,1fr)}.labFooter{align-items:flex-start}.labFooter span:nth-child(2){display:block;max-width:55%}}
+  @media(prefers-reduced-motion:reduce){.spiderOrbit,.spiderLeg,.spiderCoreGlow,.spiderCoreDot,.resOrbit,.resWave,.resNode,.resCore,.resFoot i,.labBackdrop i,.labOrb,.labCard,.labHero,.signalRow{animation:none!important}}
+
   `}</style>
  </main>;
 }
