@@ -250,9 +250,94 @@ export default function GoldLab(){
   @media(max-width:600px){.goldLab{padding:0 10px 10px}.labTop{height:42px;min-height:42px}.labWordmark{font-size:9px;letter-spacing:1px}.labWordmark small{display:none}.labHero{grid-template-columns:1fr;gap:8px;padding:10px 0}.labHero h1{font-size:30px}.labPrice{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;padding:8px 10px}.labPrice>span{grid-column:1}.labPrice strong{grid-column:2;grid-row:1/3;font-size:25px;margin:0}.labPriceFoot{grid-column:1;font-size:8px}.labGrid{grid-template-columns:minmax(0,1fr);grid-auto-rows:auto;gap:8px}.labCard,.labChart,.labSignals,.labBarchart,.labRecent,.labConfluence,.labNeural{grid-column:1;min-height:245px}.labConfluence{min-height:330px}.labNeural{min-height:275px}.confLayout{grid-template-columns:58px minmax(100px,.9fr) minmax(100px,1fr)}.labFooter{align-items:flex-start}.labFooter span:nth-child(2){display:block;max-width:55%}}
   @media(prefers-reduced-motion:reduce){.spiderOrbit,.spiderLeg,.spiderCoreGlow,.spiderCoreDot,.resOrbit,.resWave,.resNode,.resCore,.resFoot i,.labBackdrop i,.labOrb,.labCard,.labHero,.signalRow,.spiderChaos,.chaosOrbit,.chaosPolygon,.spiderSweep,.chaosParticle,.chaosThread,.computePulse,.computeTrack i,.tickerStream{animation:none!important}}
 
-  /* Desktop workspace: natural-height rows, no clipping, portrait confluence engine. */
-  @media(min-width:1101px){.goldLab{height:auto;min-height:100dvh;overflow:visible;padding-bottom:18px}.labGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(280px,auto) minmax(280px,auto) minmax(280px,auto);grid-auto-rows:minmax(280px,auto);gap:10px;overflow:visible;flex:none;min-height:0}.labChart{grid-column:1 / span 2;grid-row:1;min-height:280px}.labSignals{grid-column:3;grid-row:1;min-height:280px}.labBarchart{grid-column:4;grid-row:1;min-height:280px}.labNeural{grid-column:1;grid-row:2 / span 2;min-width:0;min-height:570px}.labRecent{grid-column:2 / span 2;grid-row:2 / span 2;min-width:0;min-height:570px}.labConfluence{grid-column:4;grid-row:2 / span 2;min-height:570px}.labConfluence .confLayout{grid-template-columns:minmax(0,1fr);gap:8px}.labConfluence .confSources{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.labConfluence .spiderStage{min-height:210px}.labConfluence .spiderStage svg{width:100%;max-height:235px}.labConfluence .confZones{min-height:0}.labConfluence .computeStages{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.labConfluence .computeConsole{padding:8px}.labConfluence .computeTicker{flex-wrap:wrap}}
-  @media(min-width:1101px) and (max-width:1350px){.labGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.labCard{padding:8px}.labCardHead h2{font-size:12px}.labConfluence .computeStage b{font-size:14px}}
+  /* Desktop at 100% zoom: all six work panels visible in a single viewport. */
+  @media(min-width:1101px){
+    .goldLab{height:100dvh;min-height:0;overflow:hidden;padding:0 1.1vw 6px;gap:0}
+    .labTop{height:38px;min-height:38px;gap:10px}
+    .labWordmark{font-size:11px;letter-spacing:1.5px}
+    .labHero{flex:none;grid-template-columns:minmax(0,1.1fr) minmax(220px,.9fr);gap:12px;align-items:center;padding:5px 0 8px}
+    .labEyebrow{font-size:8px;margin:0 0 3px}
+    .labHero h1{font-size:clamp(22px,2vw,30px);line-height:1.02;margin:0}
+    .labIntro{font-size:9px;line-height:1.3;margin:4px 0 0;max-width:520px}
+    .labPrice{padding:6px 10px}
+    .labPrice>span{font-size:8px}
+    .labPrice strong{font-size:clamp(21px,2vw,30px);line-height:1.05;margin:3px 0}
+    .labPriceFoot{font-size:7px;gap:4px}
+    .labGrid{flex:1 1 auto;min-height:0;height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-auto-rows:minmax(0,1fr);gap:7px;overflow:hidden}
+    .labCard{min-width:0;min-height:0;height:100%;padding:8px 9px 7px;overflow:hidden;display:flex;flex-direction:column;gap:3px}
+    .labChart{grid-column:1;grid-row:1}
+    .labSignals{grid-column:2;grid-row:1}
+    .labBarchart{grid-column:3;grid-row:1}
+    .labNeural{grid-column:1;grid-row:2;min-height:0}
+    .labRecent{grid-column:2;grid-row:2;min-height:0}
+    .labConfluence{grid-column:3;grid-row:2;min-height:0}
+    .labCardHead{margin-bottom:3px;gap:5px;min-width:0}
+    .labCardHead small{font-size:7px;letter-spacing:.8px}
+    .labCardHead h2{font-size:clamp(10px,.9vw,13px);line-height:1.15;margin:2px 0 0}
+    .labTag,.labLive{font-size:6px;padding:3px 4px;white-space:nowrap}
+    .chartWrap{flex:1;min-height:55px;position:relative}
+    .chartWrap svg{height:100%;min-height:0}
+    .chartEmpty{font-size:9px}
+    .chartEmpty small{font-size:8px}
+    .chartFoot{font-size:7px;padding-top:3px;gap:4px;flex-wrap:wrap}
+    .chartAxis{font-size:7px}
+    .signalList{flex:1;min-height:0;overflow:auto}
+    .signalRow{padding:5px 0;grid-template-columns:27px minmax(0,1fr) auto;gap:5px}
+    .signalIcon{width:25px;height:24px;font-size:8px}
+    .signalText b,.signalRight b{font-size:9px}
+    .signalText small{font-size:8px;line-height:1.2;margin-top:2px}
+    .signalRight small{font-size:6px;margin-top:2px}
+    .labEmpty{font-size:8px;line-height:1.35;padding:6px}
+    .labSignalFoot{margin-top:3px;padding-top:4px;font-size:6px;gap:4px}
+    .dataStats{gap:4px;margin:0 0 4px}
+    .dataStats div{padding:4px}
+    .dataStats span{font-size:6px}
+    .dataStats b{font-size:13px;margin-top:2px}
+    .dataTableHead,.dataRow{grid-template-columns:1.1fr .7fr .8fr .8fr;padding:4px 2px;gap:3px;font-size:8px}
+    .dataTableHead{font-size:6px}
+    .dataRows{flex:1;min-height:0;overflow:auto}
+    .timeline{flex:1;min-height:0;overflow:auto}
+    .timelineRow{padding:4px 0;gap:5px}
+    .timelineRow div b,.timelineRow strong{font-size:8px}
+    .timelineRow div small{font-size:7px;line-height:1.2;margin-top:2px}
+    .timelineRow time{font-size:6px}
+    .labConfluence .confMeta{gap:5px;font-size:6px;margin-bottom:2px;flex-wrap:wrap}
+    .labConfluence .confLayout{flex:1;min-height:0;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-rows:auto minmax(0,1fr);gap:4px}
+    .labConfluence .confSources{grid-column:1 / -1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
+    .labConfluence .confSource{padding:3px;gap:1px}
+    .labConfluence .confSource b{font-size:8px}
+    .labConfluence .confSource span{font-size:6px}
+    .labConfluence .confSource small{font-size:7px}
+    .labConfluence .spiderStage{min-height:0;align-self:stretch;display:flex;align-items:center;justify-content:center;position:relative}
+    .labConfluence .spiderStage svg{width:100%;height:100%;max-height:130px}
+    .labConfluence .spiderStatus{font-size:7px}
+    .labConfluence .confZones{min-height:0;overflow:auto}
+    .labConfluence .confListHead{font-size:6px;padding:2px 0}
+    .labConfluence .confMatch{padding:3px;gap:3px}
+    .labConfluence .confMatch b{font-size:7px}
+    .labConfluence .confMatch small{font-size:6px;line-height:1.1}
+    .labConfluence .confMatch strong{font-size:8px}
+    .labConfluence .confWaiting{font-size:7px;padding:4px}
+    .labConfluence .confWaiting small{font-size:6px}
+    .labConfluence .computeConsole{padding:4px;margin-top:2px}
+    .labConfluence .computeTop{font-size:6px;margin-bottom:3px}
+    .labConfluence .computeStages{grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}
+    .labConfluence .computeStage{padding:3px}
+    .labConfluence .computeStage small,.labConfluence .computeStage span{font-size:5px}
+    .labConfluence .computeStage b{font-size:9px}
+    .labConfluence .computeTicker{font-size:5px;gap:3px;flex-wrap:wrap;margin-top:3px}
+    .labConfluence .confFoot{font-size:5px;margin-top:2px;padding-top:2px}
+    .labFooter{flex:none;padding:3px 0 0;font-size:7px;gap:7px}
+  }
+  @media(min-width:1101px) and (max-height:700px){
+    .labTop{height:32px;min-height:32px}
+    .labHero{padding:2px 0 4px}
+    .labHero h1{font-size:22px}
+    .labIntro{font-size:8px}
+    .labCard{padding:6px}
+    .labConfluence .spiderStage svg{max-height:95px}
+    .labConfluence .computeConsole{padding:3px}
+  }
   `}</style>
  </main>;
 }
