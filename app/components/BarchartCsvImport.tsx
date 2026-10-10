@@ -181,6 +181,14 @@ export default function BarchartCsvImport() {
       .catch(() => {});
     return () => { cancelled = true; };
   }, []);
+  async function toggleSaved() {
+    const next = !savedOpen;
+    setSavedOpen(next);
+    if (next) {
+      try { await refreshSaved(); }
+      catch (error) { setMsg(error instanceof Error ? error.message : "Could not load saved imports"); }
+    }
+  }
   function open() {
     window.open(
       "https://www.barchart.com/futures/quotes/GC*0/volatility-greeks?futuresOptionsView=merged",
@@ -231,6 +239,9 @@ export default function BarchartCsvImport() {
         <button className="primary" onClick={choose}>
           Import CSV
         </button>
+        <button className="ghost" onClick={toggleSaved} aria-expanded={savedOpen}>
+          {savedOpen ? "Hide saved imports" : "Manage saved imports"} ({saved.length})
+        </button>
         <input
           ref={input}
           type="file"
@@ -244,6 +255,25 @@ export default function BarchartCsvImport() {
         />
         {msg && <span className="importMsg">{msg}</span>}
       </div>
+      {savedOpen && (
+        <div className="savedImportsPanel" style={{ flexBasis: "100%", width: "100%", marginTop: 10, padding: 10, border: "1px solid var(--line, rgba(255,255,255,.15))", borderRadius: 6 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <b>SUPABASE SAVED IMPORTS</b>
+            <small>Delete removes that CSV import and its rows from the database.</small>
+          </div>
+          {saved.length ? saved.map((item) => (
+            <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "7px 0", borderTop: "1px solid var(--line, rgba(255,255,255,.1))" }}>
+              <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>
+                <b>{item.sourceFile}</b>
+                <small style={{ display: "block", opacity: .7 }}>{item.rowCount} rows · {item.importedAt ? new Date(item.importedAt).toLocaleString() : "date unavailable"}</small>
+              </span>
+              <button className="ghost" disabled={busyId === item.id} onClick={() => removeSaved(item)} style={{ flexShrink: 0, borderColor: "rgba(255,100,100,.45)", color: "#ff9292" }}>
+                {busyId === item.id ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          )) : <small>No saved Barchart imports found in Supabase.</small>}
+        </div>
+      )}
     </div>
   );
 }
