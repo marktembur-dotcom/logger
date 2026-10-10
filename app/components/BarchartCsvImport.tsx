@@ -46,11 +46,11 @@ function parseCsv(text: string, fileName = ""): ImportedRow[] {
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
   const findHeader = (names: string[], side: 0 | 1 = 0) => {
     const wanted = names.map(norm);
-    return header.findIndex((h) => {
-      const key = norm(h);
-      if (side === 1) return wanted.some((name) => key === name + "1" || key === "put" + name || key === name + "put");
-      return wanted.some((name) => key === name);
-    });
+    const matches = header.map((h, index) => ({ key: norm(h), index })).filter(({ key }) => wanted.includes(key));
+    // Barchart show-all exports repeat headers for CALL and PUT.
+    if (matches.length > side) return matches[side].index;
+    // Shared columns such as Strike appear once and apply to both sides.
+    return side === 1 && matches.length === 1 ? matches[0].index : -1;
   };
   const strike = findHeader(["Strike", "Strike Price"]);
   const callType = findHeader(["Type", "Option Type"]);
