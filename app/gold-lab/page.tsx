@@ -269,8 +269,8 @@ export default function GoldLab(){
     .labSignals{grid-column:2;grid-row:1}
     .labBarchart{grid-column:3;grid-row:1}
     .labRecent{grid-column:4;grid-row:1;min-height:0}
-    .labNeural{grid-column:1 / span 2;grid-row:2;min-height:0}
-    .labConfluence{grid-column:3 / span 2;grid-row:2;min-height:0}
+    .labNeural{grid-column:1;grid-row:2;min-height:0}
+    .labConfluence{grid-column:2 / span 3;grid-row:2;min-height:0}
     .labConfluence .confLayout{grid-template-columns:minmax(105px,.8fr) minmax(115px,1fr) minmax(140px,1.2fr);grid-template-rows:minmax(0,1fr);gap:6px}
     .labConfluence .confSources{grid-column:auto;grid-template-columns:minmax(0,1fr);align-content:start;gap:4px}
     .labConfluence .confSource{padding:5px;gap:2px}
@@ -352,6 +352,42 @@ export default function GoldLab(){
     .labCard{padding:6px}
     .labConfluence .spiderStage svg{max-height:95px}
     .labConfluence .computeConsole{padding:3px}
+  }
+
+  /* Neural Field 01 gets the canvas; Field 02 becomes a compact ambient instrument. */
+  @media(min-width:1101px){
+    .labNeural .resonanceField{min-height:0;flex:1;position:relative;overflow:hidden}
+    .labNeural .resonanceField svg{width:100%;height:100%;max-height:118px;opacity:.9}
+    .labNeural .resReadout{padding:4px 7px}
+    .labNeural .resReadout b{font-size:clamp(14px,1.2vw,20px)}
+    .labNeural .resReadout small{font-size:6px}
+    .labNeural .resMetrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:3px}
+    .labNeural .resMetrics>div{padding:3px 5px}
+    .labNeural .resMetrics span{font-size:6px}
+    .labNeural .resMetrics b{font-size:7px}
+    .labNeural .resFoot{font-size:5px;line-height:1.2}
+    .labConfluence .confLayout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:5px}
+    .labConfluence .confSources{grid-column:1 / -1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-content:center;gap:5px}
+    .labConfluence .confSource{min-width:0;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:6px;padding:3px 7px;border-radius:3px;background:linear-gradient(100deg,rgba(228,91,255,.07),rgba(40,167,255,.04));border-width:1px}
+    .labConfluence .confSource b{font-size:8px;letter-spacing:.5px}
+    .labConfluence .confSource span{font-size:6px;white-space:nowrap}
+    .labConfluence .confSource small{font-size:7px;white-space:nowrap}
+    .labConfluence .spiderStage svg{max-height:190px}
+    .labConfluence .spiderStatus{font-size:8px}
+    .labConfluence .confZones{border-left:1px solid rgba(85,217,255,.12);padding-left:6px}
+    .labConfluence .confMatch{display:flex;align-items:center;justify-content:space-between;padding:4px 6px;margin-bottom:3px;border-radius:3px;background:linear-gradient(100deg,rgba(85,217,255,.045),rgba(244,201,107,.025))}
+    .labConfluence .confMatch b{font-size:8px}
+    .labConfluence .confMatch small{font-size:6px;line-height:1.25}
+    .labConfluence .confMatch strong{font-size:10px}
+    .labConfluence .computeConsole{border-color:rgba(85,217,255,.2);background:linear-gradient(120deg,rgba(85,217,255,.035),rgba(228,91,255,.035),rgba(244,201,107,.025))}
+    .labConfluence .computeStages{gap:5px}
+    .labConfluence .computeStage{padding:4px 6px}
+    .labConfluence .computeStage b{font-size:11px}
+    .labConfluence .computeStage small,.labConfluence .computeStage span{font-size:6px}
+  }
+  @media(min-width:1101px) and (max-height:700px){
+    .labNeural .resonanceField svg{max-height:85px}
+    .labConfluence .spiderStage svg{max-height:145px}
   }
   `}</style>
  </main>;
