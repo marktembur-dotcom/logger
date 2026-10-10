@@ -58,13 +58,16 @@ export default function Home() {
       const detail = (e as CustomEvent).detail || {};
       const rows = detail.rows || [];
       if (rows.length) {
-        setData({
+        const snapshot = {
           live: true,
           source: detail.source || "Barchart CSV Download",
           fetchedAt: detail.importedAt || new Date().toISOString(),
           rows,
           error: "",
-        });
+        };
+        setData(snapshot);
+        // Share the same latest Barchart snapshot with Gold Lab.
+        try { localStorage.setItem("gc-barchart-cache", JSON.stringify(snapshot)); } catch {}
       }
     };
     window.addEventListener("barchart-csv", h);
@@ -80,13 +83,16 @@ export default function Home() {
         if (!response.ok || !result?.ok) throw new Error(result?.error || "Unable to load saved Barchart import");
         const latest = result.import;
         if (latest?.rows?.length) {
-          setData({
+          const snapshot = {
             live: true,
             source: latest.sourceFile || "Barchart CSV Download",
             fetchedAt: latest.importedAt || "",
             rows: latest.rows,
             error: "",
-          });
+          };
+          setData(snapshot);
+          // Keep Gold Lab in sync even when data was loaded from Supabase on page entry.
+          try { localStorage.setItem("gc-barchart-cache", JSON.stringify(snapshot)); } catch {}
         }
       } catch (error) {
         if (!cancelled) setData((previous: any) => ({
