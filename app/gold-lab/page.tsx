@@ -18,7 +18,27 @@ export default function GoldLab(){
  useEffect(()=>{
   const loadLocal=()=>{try{const v=localStorage.getItem("gc-barchart-cache");if(v)setCsv(JSON.parse(v));const m=localStorage.getItem("gc-mt5-cache");if(m)setMt5(JSON.parse(m));}catch{}};
   loadLocal();
-  const poll=async()=>{try{const r=await fetch("/api/mt5/state",{cache:"no-store"});const j=await r.json();if(j?.ok){setMt5(j);try{localStorage.setItem("gc-mt5-cache",JSON.stringify(j));}catch{}}}catch{}};
+  const poll=async()=>{
+   // Gold Lab consumes the same server-backed snapshots as Command Center.
+   // This avoids relying on a browser-local cache that may not exist in this tab.
+   const [mt5Result,csvResult]=await Promise.allSettled([
+    fetch("/api/mt5/state",{cache:"no-store"}),
+    fetch("/api/barchart/import",{cache:"no-store"})
+   ]);
+   if(mt5Result.status==="fulfilled"){
+    try{const j=await mt5Result.value.json();if(j?.ok){setMt5(j);try{localStorage.setItem("gc-mt5-cache",JSON.stringify(j));}catch{}}}catch{}
+   }
+   if(csvResult.status==="fulfilled"){
+    try{
+     const j=await csvResult.value.json();
+     if(j?.ok&&j.import?.rows?.length){
+      const snapshot={live:true,source:j.import.sourceFile||"Barchart CSV Download",fetchedAt:j.import.importedAt||"",rows:j.import.rows};
+      setCsv(snapshot);
+      try{localStorage.setItem("gc-barchart-cache",JSON.stringify(snapshot));}catch{}
+     }
+    }catch{}
+   }
+  };
   poll();const id=setInterval(()=>{setNow(new Date());loadLocal();poll();},3000);return()=>clearInterval(id);
  },[]);
  const events=useMemo(()=>[...(mt5.events||[])].filter(e=>clean(e.price)>0).slice(0,60).reverse(),[mt5.events]);
