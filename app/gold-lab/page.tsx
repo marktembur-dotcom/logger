@@ -389,6 +389,30 @@ export default function GoldLab(){
     .labNeural .resonanceField svg{max-height:85px}
     .labConfluence .spiderStage svg{max-height:145px}
   }
+
+  /* Compact MATCH ENGINE / LIVE to expose more QUALIFIED ZONES. */
+  @media(min-width:1101px){
+    .labConfluence .computeConsole{flex:0 0 auto;min-height:0;padding:3px 6px;margin:1px 0 2px;border-radius:5px}
+    .labConfluence .computeTop{font-size:6px;line-height:1.2;margin:0}
+    .labConfluence .computeStages{margin:3px 0 0;gap:4px}
+    .labConfluence .computeStage{padding:2px 4px;display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:4px}
+    .labConfluence .computeStage small{font-size:5px;line-height:1}
+    .labConfluence .computeStage b{font-size:9px;margin:0;line-height:1}
+    .labConfluence .computeStage b em{font-size:5px}
+    .labConfluence .computeTrack{grid-column:1 / -1;height:2px;margin:3px 0 1px}
+    .labConfluence .computeStage span{grid-column:1 / -1;font-size:5px;line-height:1}
+    .labConfluence .computeTicker{display:none}
+    .labConfluence .confLayout{flex:1 1 auto;min-height:0}
+    .labConfluence .confZones{min-height:0;overflow:auto}
+    .labConfluence .confListHead{font-size:7px;padding:4px 0}
+    .labConfluence .confMatch{padding:4px 6px;margin-bottom:3px}
+  }
+  @media(min-width:1101px) and (max-height:700px){
+    .labConfluence .computeConsole{padding:2px 5px}
+    .labConfluence .computeStages{margin-top:2px;gap:3px}
+    .labConfluence .computeStage{padding:1px 3px}
+  }
+
   `}</style>
  </main>;
 }
