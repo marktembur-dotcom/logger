@@ -263,13 +263,13 @@ export default function GoldLab(){
     .labPrice>span{font-size:8px}
     .labPrice strong{font-size:clamp(21px,2vw,30px);line-height:1.05;margin:3px 0}
     .labPriceFoot{font-size:7px;gap:4px}
-    .labGrid{flex:1 1 auto;min-height:0;height:0;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.15fr) minmax(0,.85fr) minmax(0,.85fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-auto-rows:minmax(0,1fr);gap:7px;overflow:hidden}
+    .labGrid{flex:1 1 auto;min-height:0;height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-auto-rows:minmax(0,1fr);gap:7px;overflow:hidden}
     .labCard{min-width:0;min-height:0;height:100%;padding:8px 9px 7px;overflow:hidden;display:flex;flex-direction:column;gap:3px}
-    .labChart{grid-column:1 / span 2;grid-row:1}
-    .labSignals{grid-column:3;grid-row:1}
-    .labBarchart{grid-column:4;grid-row:1}
-    .labNeural{grid-column:1;grid-row:2;min-height:0}
-    .labRecent{grid-column:2;grid-row:2;min-height:0}
+    .labChart{grid-column:1;grid-row:1}
+    .labSignals{grid-column:2;grid-row:1}
+    .labBarchart{grid-column:3;grid-row:1}
+    .labRecent{grid-column:4;grid-row:1;min-height:0}
+    .labNeural{grid-column:1 / span 2;grid-row:2;min-height:0}
     .labConfluence{grid-column:3 / span 2;grid-row:2;min-height:0}
     .labConfluence .confLayout{grid-template-columns:minmax(105px,.8fr) minmax(115px,1fr) minmax(140px,1.2fr);grid-template-rows:minmax(0,1fr);gap:6px}
     .labConfluence .confSources{grid-column:auto;grid-template-columns:minmax(0,1fr);align-content:start;gap:4px}
