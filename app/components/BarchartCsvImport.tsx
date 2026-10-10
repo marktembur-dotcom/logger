@@ -143,6 +143,28 @@ export default function BarchartCsvImport() {
   const [saved, setSaved] = useState<SavedImport[]>([]);
   const [savedOpen, setSavedOpen] = useState(false);
   const [busyId, setBusyId] = useState("");
+  async function removeSaved(item: SavedImport) {
+    if (!window.confirm(`Delete saved import “${item.sourceFile}” (${item.rowCount} rows) from Supabase?`)) return;
+    setBusyId(item.id);
+    try {
+      const response = await fetch(`/api/barchart/import?id=${encodeURIComponent(item.id)}`, { method: "DELETE", cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok || !result?.ok) throw new Error(result?.error || "Could not delete import");
+      setMsg(`Deleted ${item.sourceFile} from Supabase`);
+      const refreshed = await refreshSaved();
+      if (refreshed.import?.id === item.id) {
+        const latestResponse = await fetch("/api/barchart/import", { cache: "no-store" });
+        const latestData = await latestResponse.json();
+        if (latestData?.ok && latestData.import) {
+          window.dispatchEvent(new CustomEvent("barchart-csv", { detail: { rows: latestData.import.rows, source: latestData.import.sourceFile, importedAt: latestData.import.importedAt } }));
+        } else {
+          window.dispatchEvent(new CustomEvent("barchart-csv", { detail: { rows: [], source: "", importedAt: "" } }));
+        }
+      }
+    } catch (error) {
+      setMsg(error instanceof Error ? error.message : "Could not delete import");
+    } finally { setBusyId(""); }
+  }
   async function refreshSaved() {
     const response = await fetch("/api/barchart/import", { cache: "no-store" });
     const result = await response.json();
