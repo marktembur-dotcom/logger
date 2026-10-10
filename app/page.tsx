@@ -57,18 +57,19 @@ export default function Home() {
     const h = (e: Event) => {
       const detail = (e as CustomEvent).detail || {};
       const rows = detail.rows || [];
-      if (rows.length) {
-        const snapshot = {
-          live: true,
-          source: detail.source || "Barchart CSV Download",
-          fetchedAt: detail.importedAt || new Date().toISOString(),
-          rows,
-          error: "",
-        };
-        setData(snapshot);
-        // Share the same latest Barchart snapshot with Gold Lab.
-        try { localStorage.setItem("gc-barchart-cache", JSON.stringify(snapshot)); } catch {}
-      }
+      const snapshot = rows.length ? {
+        live: true,
+        source: detail.source || "Barchart CSV Download",
+        fetchedAt: detail.importedAt || new Date().toISOString(),
+        rows,
+        error: "",
+      } : { ...empty };
+      setData(snapshot);
+      // Share the active saved Barchart snapshot with Gold Lab, including clearing a deleted import.
+      try {
+        if (rows.length) localStorage.setItem("gc-barchart-cache", JSON.stringify(snapshot));
+        else localStorage.removeItem("gc-barchart-cache");
+      } catch {}
     };
     window.addEventListener("barchart-csv", h);
     return () => window.removeEventListener("barchart-csv", h);
