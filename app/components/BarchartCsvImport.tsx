@@ -253,7 +253,7 @@ export default function BarchartCsvImport() {
             e.currentTarget.value = "";
           }}
         />
-        {msg && <span className="importMsg">{msg}</span>}
+        {msg && <span className={"importMsg " + (msg.startsWith("Deleted ") ? "importMsgDeleted" : "")} title={msg}>{msg}</span>}
       </div>
       {savedOpen && (
         <div className="savedImportsBackdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSavedOpen(false); }}>
@@ -280,6 +280,7 @@ export default function BarchartCsvImport() {
             <footer className="savedImportsFooter"><span>{saved.length} saved file{saved.length === 1 ? "" : "s"}</span><button className="savedImportsDone" onClick={() => setSavedOpen(false)}>Done</button></footer>
           </section>
           <style jsx>{`
+            .importMsgDeleted{display:inline-block;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;font-size:10px!important;line-height:1.35;padding:5px 8px;border:1px solid rgba(103,240,173,.2);border-radius:5px;background:rgba(103,240,173,.06);color:#83e5b2}
             .savedImportsBackdrop{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:22px;background:rgba(3,7,14,.78);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
             .savedImportsWindow{width:min(680px,calc(100vw - 32px));max-height:min(78vh,760px);display:flex;flex-direction:column;overflow:hidden;color:#e7edf5;background:linear-gradient(145deg,rgba(17,25,39,.99),rgba(8,13,23,.99));border:1px solid rgba(244,201,107,.3);border-radius:13px;box-shadow:0 24px 90px rgba(0,0,0,.62),inset 0 1px rgba(255,255,255,.045)}
             .savedImportsHeader{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:20px 22px 15px;border-bottom:1px solid rgba(255,255,255,.08)}
