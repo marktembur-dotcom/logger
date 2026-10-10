@@ -416,27 +416,27 @@ export default function GoldLab(){
 
   /* Dock MATCH ENGINE vertically on the right side of the Cross-Source Match card. */
   @media(min-width:1101px){
-    .labConfluence{display:grid;grid-template-columns:minmax(0,1fr) minmax(124px,17%);grid-template-rows:auto minmax(0,1fr) auto;column-gap:8px;row-gap:4px;align-items:stretch}
+    .labConfluence{display:grid;grid-template-columns:minmax(0,1fr) minmax(190px,25%);grid-template-rows:auto minmax(0,1fr) auto;column-gap:8px;row-gap:4px;align-items:stretch}
     .labConfluence>.labCardHead{grid-column:1 / -1;grid-row:1}
     .labConfluence>.confLayout{grid-column:1;grid-row:2;min-width:0;min-height:0}
-    .labConfluence>.computeConsole{grid-column:2;grid-row:2;align-self:stretch;min-width:0;width:100%;height:100%;box-sizing:border-box;margin:0;padding:7px 6px;display:flex;flex-direction:column;justify-content:flex-start;gap:7px}
-    .labConfluence>.computeConsole .computeTop{display:flex;flex-direction:column;gap:5px;align-items:flex-start;font-size:7px;line-height:1.35}
-    .labConfluence>.computeConsole .computeTop>span:first-child{font-size:7px;line-height:1.5;letter-spacing:.35px}
-    .labConfluence>.computeConsole .computeTop>span:last-child{font-size:6px;opacity:.72}
-    .labConfluence>.computeConsole .computeStages{display:flex;flex-direction:column;gap:7px;margin:0;min-height:0}
-    .labConfluence>.computeConsole .computeStage{display:flex;flex-direction:column;align-items:stretch;gap:3px;padding:5px 5px;border:1px solid rgba(85,231,255,.12);border-radius:4px;background:linear-gradient(145deg,rgba(85,231,255,.045),rgba(228,91,255,.035))}
-    .labConfluence>.computeConsole .computeStage small{font-size:6px;line-height:1.2;letter-spacing:.35px}
-    .labConfluence>.computeConsole .computeStage b{font-size:13px;line-height:1.15}
+    .labConfluence>.computeConsole{grid-column:2;grid-row:2;align-self:stretch;min-width:0;width:100%;height:100%;box-sizing:border-box;margin:0;padding:12px 10px;display:flex;flex-direction:column;justify-content:flex-start;gap:10px}
+    .labConfluence>.computeConsole .computeTop{display:flex;flex-direction:column;gap:5px;align-items:flex-start;font-size:9px;line-height:1.4}
+    .labConfluence>.computeConsole .computeTop>span:first-child{font-size:10px;line-height:1.5;letter-spacing:.45px}
+    .labConfluence>.computeConsole .computeTop>span:last-child{font-size:8px;opacity:.72}
+    .labConfluence>.computeConsole .computeStages{display:flex;flex-direction:column;gap:10px;margin:0;min-height:0}
+    .labConfluence>.computeConsole .computeStage{display:flex;flex-direction:column;align-items:stretch;gap:3px;padding:8px 7px;border:1px solid rgba(85,231,255,.12);border-radius:4px;background:linear-gradient(145deg,rgba(85,231,255,.045),rgba(228,91,255,.035))}
+    .labConfluence>.computeConsole .computeStage small{font-size:8px;line-height:1.25;letter-spacing:.45px}
+    .labConfluence>.computeConsole .computeStage b{font-size:17px;line-height:1.2}
     .labConfluence>.computeConsole .computeStage b em{font-size:6px}
-    .labConfluence>.computeConsole .computeTrack{height:3px;margin:2px 0}
-    .labConfluence>.computeConsole .computeStage span{font-size:5px;line-height:1.25;white-space:normal}
-    .labConfluence>.computeConsole .computeTicker{display:flex;flex-direction:column;gap:4px;margin-top:auto;padding-top:6px;border-top:1px solid rgba(85,231,255,.12);font-size:5px;line-height:1.4}
+    .labConfluence>.computeConsole .computeTrack{height:4px;margin:3px 0}
+    .labConfluence>.computeConsole .computeStage span{font-size:7px;line-height:1.35;white-space:normal}
+    .labConfluence>.computeConsole .computeTicker{display:flex;flex-direction:column;gap:4px;margin-top:auto;padding-top:6px;border-top:1px solid rgba(85,231,255,.12);font-size:7px;line-height:1.45}
     .labConfluence>.computeConsole .tickerStream{display:none}
     .labConfluence>.confFoot{grid-column:1 / -1;grid-row:3}
     .labConfluence .confZones{overflow:auto;min-width:0}
   }
   @media(min-width:1101px) and (max-height:700px){
-    .labConfluence{grid-template-columns:minmax(0,1fr) 124px;column-gap:5px}
+    .labConfluence{grid-template-columns:minmax(0,1fr) 180px;column-gap:5px}
     .labConfluence>.computeConsole{padding:4px;gap:4px}
     .labConfluence>.computeConsole .computeStages{gap:4px}
     .labConfluence>.computeConsole .computeStage{padding:3px}
