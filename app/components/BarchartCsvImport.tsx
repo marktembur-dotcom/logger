@@ -4,19 +4,21 @@ import { useEffect, useRef, useState } from "react";
 
 type ImportedRow = {
   symbol: string; type: string; strike: number; bid: number; ask: number; last: number;
-  volume: number; openInterest: number; iv: number; delta: number; gamma: number; theta: number; vega: number;
+  volume: number; openInterest: number; iv: number; ivSkew?: number; delta: number; gamma: number; theta: number; vega: number;
   dte: number; expiration: string; tradeTime: string; percentFromLast: number; baseLast: number;
 };
 
 function n(v: string) {
-  const x = Number(String(v ?? "").replace(/[%,$,]/g, "").trim());
+  const raw = String(v ?? "").replace(/[%,$,]/g, "").replace(/s$/i, "").trim();
+  if (!raw || raw.toLowerCase() === "unch") return 0;
+  const x = Number(raw);
   return Number.isFinite(x) ? x : 0;
 }
 function clean(v: string) {
   return String(v ?? "").replace(/^"|"$/g, "").trim();
 }
 
-function parseCsv(text: string): ImportedRow[] {
+function parseCsv(text: string, fileName = ""): ImportedRow[] {
   const lines = text.replace(/\r/g, "").split("\n").filter((x) => x.trim());
   if (!lines.length) return [];
   const rows: string[][] = [];
@@ -42,38 +44,48 @@ function parseCsv(text: string): ImportedRow[] {
 
   const header = rows[0].map(clean);
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const idx = (name: string) => header.findIndex((h) => norm(h) === norm(name));
-  const findAny = (names: string[]) => {
+  const idx = (name: string, side: 0 | 1 = 0) => {
+    const target = norm(name) + (side === 1 ? "1" : "");
+    return header.findIndex((h) => norm(h) === target);
+  };
+  const findAny = (names: string[], side: 0 | 1 = 0) => {
     for (const name of names) {
-      const i = idx(name);
+      const i = idx(name, side);
       if (i >= 0) return i;
     }
     return -1;
   };
 
   const strike = findAny(["Strike", "Strike Price"]);
-  const typeCol = findAny(["Type", "Option Type"]);
-  if (strike < 0 || typeCol < 0)
+  const callType = findAny(["Type", "Option Type"]);
+  const putType = findAny(["Type", "Option Type"], 1);
+  const pairedSides = putType >= 0;
+  if (strike < 0 || callType < 0)
     throw new Error("This is not a Barchart Volatility & Greeks CSV: Strike/Type columns not found.");
 
-  const latest = findAny(["Latest", "Last", "Last Price"]);
-  const iv = findAny(["IV", "Implied Volatility", "Volatility"]);
-  const delta = findAny(["Delta"]);
-  const gamma = findAny(["Gamma"]);
-  const theta = findAny(["Theta"]);
-  const vega = findAny(["Vega"]);
-  const time = findAny(["Last Trade", "Trade Time", "Time"]);
+  const expiryMatch = fileName.match(/exp-(\d{1,2})_(\d{1,2})_(\d{2,4})/i);
+  const expiryMonth = expiryMatch ? Number(expiryMatch[1]) : 10;
+  const expiryDay = expiryMatch ? Number(expiryMatch[2]) : 13;
+  const expiryYearRaw = expiryMatch ? Number(expiryMatch[3]) : 2026;
+  const expiryYear = expiryYearRaw < 100 ? 2000 + expiryYearRaw : expiryYearRaw;
+  const expiryDate = new Date(expiryYear, expiryMonth - 1, expiryDay, 23, 59, 59);
+  const expiration = String(expiryMonth).padStart(2, "0") + "/" + String(expiryDay).padStart(2, "0") + "/" + expiryYear;
+  const dte = Math.max(0, Math.ceil((expiryDate.getTime() - Date.now()) / 86400000));
 
-  function make(r: string[]): ImportedRow | null {
+  function make(r: string[], side: 0 | 1): ImportedRow | null {
+    const typeCol = findAny(["Type", "Option Type"], side);
     const type = clean(r[typeCol]).toLowerCase();
     if (type !== "call" && type !== "put") return null;
     const strikeV = n(r[strike]);
     if (!strikeV) return null;
-    const expiration = "10/09/2026";
-    const dte = Math.max(
-      0,
-      Math.ceil((new Date("2026-10-09T23:59:59").getTime() - Date.now()) / 86400000)
-    );
+    const latest = findAny(["Latest", "Last", "Last Price"], side);
+    const iv = findAny(["IV", "Implied Volatility", "Volatility"], side);
+    const delta = findAny(["Delta"], side);
+    const gamma = findAny(["Gamma"], side);
+    const theta = findAny(["Theta"], side);
+    const vega = findAny(["Vega"], side);
+    const skew = findAny(["IV Skew", "Implied Volatility Skew"], side);
+    const time = findAny(["Last Trade", "Trade Time", "Time"], side);
     return {
       symbol: "GCZ26",
       type,
@@ -88,6 +100,7 @@ function parseCsv(text: string): ImportedRow[] {
       gamma: n(gamma >= 0 ? r[gamma] : ""),
       theta: n(theta >= 0 ? r[theta] : ""),
       vega: n(vega >= 0 ? r[vega] : ""),
+      ivSkew: skew >= 0 ? n(r[skew]) : undefined,
       dte,
       expiration,
       tradeTime: clean(time >= 0 ? r[time] : ""),
@@ -98,24 +111,28 @@ function parseCsv(text: string): ImportedRow[] {
 
   const out: ImportedRow[] = [];
   for (let i = 1; i < rows.length; i++) {
-    const x = make(rows[i]);
-    if (x) out.push(x);
+    const call = make(rows[i], 0);
+    if (call) out.push(call);
+    if (pairedSides) {
+      const put = make(rows[i], 1);
+      if (put) out.push(put);
+    }
   }
   if (!out.length) throw new Error("Barchart CSV was read, but no Call/Put rows were found.");
 
   const calls = out.filter((x) => x.type === "call").sort((a, b) => a.strike - b.strike);
   let baseLast = 0;
   for (let i = 0; i < calls.length - 1; i++) {
-    const a = calls[i],
-      b = calls[i + 1];
+    const a = calls[i], b = calls[i + 1];
     if ((a.delta >= 0.5 && b.delta <= 0.5) || (a.delta <= 0.5 && b.delta >= 0.5)) {
       const denom = b.delta - a.delta;
       baseLast = denom ? a.strike + ((0.5 - a.delta) / denom) * (b.strike - a.strike) : a.strike;
       break;
     }
   }
-  if (!baseLast && calls.length)
-    baseLast = calls.reduce((a, b) => (Math.abs(a.delta - 0.5) < Math.abs(b.delta - 0.5) ? a : b)).strike;
+  if (!baseLast && calls.length) {
+    baseLast = calls.reduce((a, b) => Math.abs(a.delta - 0.5) < Math.abs(b.delta - 0.5) ? a : b).strike;
+  }
 
   return out.map((x) => ({
     ...x,
@@ -123,7 +140,6 @@ function parseCsv(text: string): ImportedRow[] {
     percentFromLast: baseLast ? ((x.strike - baseLast) / baseLast) * 100 : 0,
   }));
 }
-
 export default function BarchartCsvImport() {
   const input = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState("");
@@ -156,7 +172,7 @@ export default function BarchartCsvImport() {
     setMsg("Reading and saving CSV…");
     reader.onload = async () => {
       try {
-        const rows = parseCsv(String(reader.result || ""));
+        const rows = parseCsv(String(reader.result || ""), file.name);
         const response = await fetch("/api/barchart/import", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
