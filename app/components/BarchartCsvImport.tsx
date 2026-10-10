@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+type SavedImport = { id: string; sourceFile: string; rowCount: number; importedAt: string };
+
 type ImportedRow = {
   symbol: string; type: string; strike: number; bid: number; ask: number; last: number;
   volume: number; openInterest: number; iv: number; ivSkew?: number; delta: number; gamma: number; theta: number; vega: number;
@@ -138,13 +140,23 @@ function parseCsv(text: string, fileName = ""): ImportedRow[] {
 export default function BarchartCsvImport() {
   const input = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState("");
+  const [saved, setSaved] = useState<SavedImport[]>([]);
+  const [savedOpen, setSavedOpen] = useState(false);
+  const [busyId, setBusyId] = useState("");
+  async function refreshSaved() {
+    const response = await fetch("/api/barchart/import", { cache: "no-store" });
+    const result = await response.json();
+    if (!response.ok || !result?.ok) throw new Error(result?.error || "Could not load saved imports");
+    setSaved(Array.isArray(result.imports) ? result.imports : []);
+    return result;
+  }
   useEffect(() => {
     let cancelled = false;
     fetch("/api/barchart/import", { cache: "no-store" })
       .then(async (response) => {
         const result = await response.json();
         if (!response.ok || !result?.ok) throw new Error(result?.error || "Could not load latest import");
-        if (!cancelled && result.import) {
+        if (!cancelled) setSaved(Array.isArray(result.imports) ? result.imports : []);\n        if (!cancelled && result.import) {
           const when = result.import.importedAt ? new Date(result.import.importedAt).toLocaleString() : "saved";
           setMsg(`Latest import: ${result.import.rowCount} rows · ${when}`);
         }
@@ -181,7 +193,7 @@ export default function BarchartCsvImport() {
         window.dispatchEvent(new CustomEvent("barchart-csv", {
           detail: { rows: result.import.rows, source: result.import.sourceFile, importedAt: result.import.importedAt },
         }));
-        setMsg(`${rows.length} rows saved to Supabase`);
+        setMsg(`${rows.length} rows saved to Supabase`);\n        try { await refreshSaved(); } catch {}
       } catch (e) {
         setMsg(e instanceof Error ? e.message : "Could not save CSV");
       }
