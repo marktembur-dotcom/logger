@@ -21,8 +21,7 @@ function clean(v: string) {
 }
 
 function parseCsv(text: string, fileName = ""): ImportedRow[] {
-  const lines = text.replace(/\r/g, "").split("
-").filter((x) => x.trim());
+  const lines = text.replace(/\r/g, "").split("\n").filter((x) => x.trim());
   if (!lines.length) return [];
   const rows: string[][] = [];
   for (const line of lines) {
