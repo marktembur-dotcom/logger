@@ -31,10 +31,15 @@ export default function GoldLab(){
    if(csvResult.status==="fulfilled"){
     try{
      const j=await csvResult.value.json();
-     if(j?.ok&&j.import?.rows?.length){
-      const snapshot={live:true,source:j.import.sourceFile||"Barchart CSV Download",fetchedAt:j.import.importedAt||"",rows:j.import.rows};
-      setCsv(snapshot);
-      try{localStorage.setItem("gc-barchart-cache",JSON.stringify(snapshot));}catch{}
+     if(j?.ok){
+      if(j.import?.rows?.length){
+       const snapshot={live:true,source:j.import.sourceFile||"Barchart CSV Download",fetchedAt:j.import.importedAt||"",rows:j.import.rows};
+       setCsv(snapshot);
+       try{localStorage.setItem("gc-barchart-cache",JSON.stringify(snapshot));}catch{}
+      }else{
+       setCsv({live:false,rows:[]});
+       try{localStorage.removeItem("gc-barchart-cache");}catch{}
+      }
      }
     }catch{}
    }
