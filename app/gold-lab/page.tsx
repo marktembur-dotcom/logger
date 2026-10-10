@@ -119,7 +119,7 @@ export default function GoldLab(){
    </article>
    <article className="labCard labBarchart"><div className="labCardHead"><div><small>YOUR IMPORT</small><h2>Barchart market data</h2></div><span className={csv.live?"labLive":"labTag"}>{csv.live?"IMPORTED":"NOT LOADED"}</span></div><div className="dataStats"><div><span>ROWS</span><b>{rows.length}</b></div><div><span>SYMBOLS</span><b>{new Set(rows.map(r=>r.symbol).filter(Boolean)).size||"—"}</b></div><div><span>EXPIRIES</span><b>{new Set(rows.map(r=>r.expiration).filter(Boolean)).size||"—"}</b></div></div><div className="dataTableHead"><span>SYMBOL</span><span>TYPE</span><span>STRIKE</span><span>LAST</span></div><div className="dataRows">{rows.map((r,i)=><div className="dataRow" key={i}><b>{r.symbol||"—"}</b><span>{r.type||"—"}</span><span>{r.strike?nfmt(r.strike,0):"—"}</span><span>{r.last?nfmt(r.last):"—"}</span></div>)}</div>{!rows.length&&<div className="labEmpty">Import your CSV on the Command Center. New imports are shared with this window.</div>}</article>
 
-   <article className="labCard labConfluence"><div className="labCardHead"><div><small>NEURAL FIELD 01 · CROSS-SOURCE MATCH</small><h2>Neural match engine</h2></div><span className={strongest?"labLive":"labTag"}>{strongest?"CONFLUENCE FOUND":"COMPUTING"}</span></div>
+   <article className="labCard labConfluence"><div className="labCardHead"><div><small className="crossSourceLabel">NEURAL FIELD 01 · CROSS-SOURCE MATCH</small><h2>Neural match engine</h2></div><span className={strongest?"labLive":"labTag"}>{strongest?"CONFLUENCE FOUND":"COMPUTING"}</span></div>
     <div className="confMeta"><span><i className="confDot mt1"/> XAU 1M</span><span><i className="confDot mt5"/> XAU 5M</span><span><i className="confDot win"/> WIN</span><span className="confRef">REF {price?nfmt(price):"—"}</span></div>
     <div className="confLayout">
      <div className="confSources">{["XAU1","XAU5","WIN"].map(key=>{const f=mt5.feeds?.[key];const dir=f?(/sell|short|bear/i.test((f.side||"")+" "+f.signal)?"SELL":/buy|long|bull|demand/i.test((f.side||"")+" "+f.signal)?"BUY":"WATCH"):"IDLE";return <div className={"confSource "+key.toLowerCase()} key={key}><b>{key==="XAU1"?"1M":key==="XAU5"?"5M":"WIN"}</b><span>{f?dir:"NO SIGNAL"}</span><small>{f? nfmt(f.price):"—"}</small></div>})}</div>
@@ -141,7 +141,7 @@ export default function GoldLab(){
        <div className="computeStage"><small>03 / COMPARE</small><b>{confluence.length} <em>HITS</em></b><div className="computeTrack"><i style={{width:Math.min(100,confluence.length/10*100)+"%"}}/></div><span>PRICE + DIRECTION</span></div>
        <div className="computeStage computeResult"><small>04 / RANK</small><b>{strongest?strongest.points+"%":"—"}</b><div className="computeTrack"><i style={{width:Math.min(100,strongest?.points||0)+"%"}}/></div><span>{strongest?"TOP MATCH SCORE":"AWAITING MATCH"}</span></div>
       </div>
-      <div className="computeTicker"><span>PAIRWISE DISTANCE CHECK</span><b>{Math.max(0,Object.values(mt5.feeds||{}).filter(Boolean).length*qualifiedZones.length).toLocaleString()} PAIRS EVALUATED</b><span className="tickerStream">› › › › › › › › › › › › › › › › › › › ›</span></div>
+      <div className="computeTicker"><span>PAIRWISE DISTANCE CHECK</span><b>{Math.max(0,Object.values(mt5.feeds||{}).filter(Boolean).length*qualifiedZones.length).toLocaleString()} PAIRS EVALUATED</b><small>Each MT5 feed is checked against qualified price zones to find nearby confluence.</small><span className="tickerStream">› › › › › › › › › › › › › › › › › › › ›</span></div>
     </div>
     <div className="confFoot"><span>MT5 signals + option-chain qualification</span><span>ZONE MATCH WINDOW ± max($12, 0.3%)</span></div>
    </article>
@@ -420,6 +420,12 @@ export default function GoldLab(){
     .labConfluence>.labCardHead{grid-column:1 / -1;grid-row:1}
     .labConfluence>.confLayout{grid-column:1;grid-row:2;min-width:0;min-height:0}
     .labConfluence>.computeConsole{grid-column:2;grid-row:2;align-self:stretch;min-width:0;width:100%;height:100%;box-sizing:border-box;margin:0;padding:12px 10px;display:flex;flex-direction:column;justify-content:flex-start;gap:10px}
+    .labConfluence>.computeConsole{overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(85,231,255,.55) rgba(255,255,255,.04)}
+    .labConfluence>.computeConsole .computeTicker{position:relative;flex-shrink:0;overflow-wrap:anywhere;word-break:normal}
+    .labConfluence>.computeConsole .computeTicker b{display:block;font-size:8px;line-height:1.4;white-space:normal}
+    .labConfluence>.computeConsole .computeTicker small{display:block;color:#8294a8;font-size:7px;line-height:1.4}
+    .labConfluence>.computeConsole .computeStages{flex:0 0 auto}
+    .labConfluence .crossSourceLabel{display:inline-block;padding:5px 8px;border:1px solid rgba(85,231,255,.25);border-radius:4px;background:linear-gradient(90deg,rgba(85,231,255,.12),rgba(85,231,255,.025));color:#78e8f5!important;letter-spacing:1.2px!important}
     .labConfluence>.computeConsole .computeTop{display:flex;flex-direction:column;gap:5px;align-items:flex-start;font-size:9px;line-height:1.4}
     .labConfluence>.computeConsole .computeTop>span:first-child{font-size:10px;line-height:1.5;letter-spacing:.45px}
     .labConfluence>.computeConsole .computeTop>span:last-child{font-size:8px;opacity:.72}
