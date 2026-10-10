@@ -25,40 +25,24 @@ function endpoint(path: string) {
 
 export async function GET() {
   try {
-    const response = await fetch(
-      endpoint("barchart_imports?select=id,source_file,row_count,rows,imported_at&order=imported_at.desc&limit=1"),
-      { headers: supabaseHeaders(), cache: "no-store" }
-    );
-    if (!response.ok) {
-      const detail = await response.text();
-      throw new Error(`Supabase read failed (${response.status}): ${detail.slice(0, 250)}`);
+    const headers = supabaseHeaders();
+    const [latestResponse, listResponse] = await Promise.all([
+      fetch(endpoint("barchart_imports?select=id,source_file,row_count,rows,imported_at&order=imported_at.desc&limit=1"), { headers, cache: "no-store" }),
+      fetch(endpoint("barchart_imports?select=id,source_file,row_count,imported_at&order=imported_at.desc&limit=50"), { headers, cache: "no-store" }),
+    ]);
+    if (!latestResponse.ok || !listResponse.ok) {
+      const failed = !latestResponse.ok ? latestResponse : listResponse;
+      const detail = await failed.text();
+      throw new Error(`Supabase read failed (${failed.status}): ${detail.slice(0, 250)}`);
     }
-    const records = (await response.json()) as Array<{
-      id: string;
-      source_file: string;
-      row_count: number;
-      rows: unknown[];
-      imported_at: string;
-    }>;
-    const latest = records[0] || null;
-    return NextResponse.json(
-      { ok: true, import: latest ? {
-        id: latest.id,
-        sourceFile: latest.source_file,
-        rowCount: latest.row_count,
-        rows: latest.rows,
-        importedAt: latest.imported_at,
-      } : null },
-      { headers: { "Cache-Control": "no-store, max-age=0" } }
-    );
+    const latestRecords = await latestResponse.json() as Array<{ id: string; source_file: string; row_count: number; rows: unknown[]; imported_at: string }>;
+    const imports = await listResponse.json() as Array<{ id: string; source_file: string; row_count: number; imported_at: string }>;
+    const latest = latestRecords[0] || null;
+    return NextResponse.json({ ok: true, imports: imports.map((item) => ({ id: item.id, sourceFile: item.source_file, rowCount: item.row_count, importedAt: item.imported_at })), import: latest ? { id: latest.id, sourceFile: latest.source_file, rowCount: latest.row_count, rows: latest.rows, importedAt: latest.imported_at } : null }, { headers: { "Cache-Control": "no-store, max-age=0" } });
   } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "Unable to load Barchart import" },
-      { status: 503, headers: { "Cache-Control": "no-store, max-age=0" } }
-    );
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Unable to load Barchart imports" }, { status: 503, headers: { "Cache-Control": "no-store, max-age=0" } });
   }
 }
-
 export async function POST(request: Request) {
   try {
     const body = await request.json();
