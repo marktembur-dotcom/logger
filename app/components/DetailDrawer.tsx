@@ -37,7 +37,7 @@ export default function DetailDrawer({
   rowsCount: number;
 }) {
   const [range, setRange] = useState<"atm" | "near" | "wide" | "all">("near");
-  const [view, setView] = useState<"table" | "side">("side");
+  const [view, setView] = useState<"table" | "side" | "qualified">("side");
 
   const filtered = useMemo(() => {
     let x = [...levels];
@@ -98,6 +98,7 @@ export default function DetailDrawer({
           >
             FULL TABLE
           </button>
+          <button type="button" className={"glassChip" + (view === "qualified" ? " on" : "")} onClick={() => setView("qualified")}>QUALIFIED ZONES</button>
         </div>
 
         <div className="glassBody">
