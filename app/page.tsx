@@ -158,7 +158,10 @@ export default function Home() {
       const lowIv = quantile(valid.map((item) => item.row.iv), 0.25);
       const lowVega = quantile(valid.map((item) => item.row.vega), 0.25);
       const highGamma = quantile(valid.map((item) => item.row.gamma), 0.75);
-      const highAbsTheta = quantile(valid.map((item) => Math.abs(item.row.theta)), 0.75);
+      // Theta is signed: a more-negative theta must be genuinely negative,
+      // not merely large in absolute value.
+      const negativeTheta = valid.map((item) => item.row.theta).filter((theta) => Number.isFinite(theta) && theta < 0);
+      const moreNegativeTheta = negativeTheta.length ? quantile(negativeTheta, 0.25) : Number.NaN;
       const zones: QualifiedZone[] = [];
       for (const item of candidates) {
         const row = item.row;
@@ -166,7 +169,7 @@ export default function Home() {
         if (Math.abs(row.delta) >= 0.5) matchedRules.push("Delta");
         if (row.iv > 0 && row.iv <= lowIv) matchedRules.push("Low IV");
         if (row.gamma >= highGamma) matchedRules.push("High Gamma");
-        if (Math.abs(row.theta) >= highAbsTheta) matchedRules.push("More-negative Theta");
+        if (Number.isFinite(moreNegativeTheta) && row.theta < 0 && row.theta <= moreNegativeTheta) matchedRules.push("More-negative Theta");
         if (row.vega <= lowVega) matchedRules.push("Low Vega");
         const skew = row.ivSkew;
         if (typeof skew === "number" && (side === "BUY" ? skew > 0 : skew < 0)) matchedRules.push("IV Skew");
@@ -186,7 +189,9 @@ export default function Home() {
           });
         }
       }
-      return zones.sort((a, b) => b.rulesPassed - a.rulesPassed || Math.abs(a.distance) - Math.abs(b.distance) || a.strike - b.strike);
+      // Keep the nearest qualified levels first; rule count is a tie-breaker,
+      // not a reason to promote a much farther strike over a nearby zone.
+      return zones.sort((a, b) => Math.abs(a.distance) - Math.abs(b.distance) || b.rulesPassed - a.rulesPassed || a.strike - b.strike);
     }
     return { buy: qualify("BUY"), sell: qualify("SELL"), nearStrikes: nearby.map((item) => item.strike) };
   }, [rows, price]);
@@ -234,7 +239,7 @@ export default function Home() {
           <span className={"chip " + (data.live ? "on" : "")}>{data.live ? "BARCHART ON" : "CSV OFF"}</span>
           <span className="chip on">ZONE ENGINE</span><span className="chip">EARLY / PARTIAL / CONFIRMED</span><span className="chip amber">XAUUSD FOCUS</span>
         </div>
-        <div className="topMeta"><span>XAU</span><b>{price ? fmt(price, 2) : "—"}</b><span>{utc}</span>
+        <div className="topMeta"><span>XAU REF</span><b>{price ? fmt(price, 2) : "—"}</b><span>{mt5Price ? "MT5 SIGNAL" : data.live ? "BARCHART" : "NO PRICE"}</span><span>{utc}</span>
           <a className="goldLabLaunch" href="/gold-lab">OPEN GOLD LAB ↗</a>
           <button className="iconBtn" type="button" onClick={() => setDetailOpen(true)}>DATA</button>
           <button className="iconBtn" type="button" onClick={() => setSettingsOpen(true)}>THEME</button>
@@ -243,7 +248,7 @@ export default function Home() {
       <BarchartCsvImport />
       <div className="mainGrid">
         <section className="panel engineCard accent-green"><div className="panelHead"><div><b>SIGNAL ENGINE</b><small>LIVE FEED</small></div><span className={"chip " + (mt5Live ? "green" : "")}>{mt5Live ? "LIVE" : "IDLE"}</span></div><div className="panelBody"><div className={"enginePnl " + (eventCount ? "" : "idle")}>{eventCount ? eventCount + " EVENTS" : "NO EVENTS"}</div><div className="statGrid"><div><span>CONFIRMED</span><b style={{ color: "var(--c2)" }}>{confirmedN}</b></div><div><span>PARTIAL</span><b style={{ color: "var(--c4)" }}>{partialN}</b></div><div><span>EARLY</span><b style={{ color: "var(--c1)" }}>{earlyN}</b></div><div><span>FEEDS</span><b>{Object.keys(mt5.feeds).length}/3</b></div><div><span>LATENCY</span><b>{latLabel}</b></div><div><span>LEVELS</span><b>{levels.length}</b></div></div></div></section>
-        <section className="panel spotPanel accent-cyan"><div className="panelHead"><div><b>XAU / GC SPOT</b><small>{data.live ? "BARCHART" : mt5Price ? "MT5" : "AWAITING"}</small></div><span className={"chip " + (price ? "green" : "")}>{price ? "LIVE" : "—"}</span></div><div className="panelBody"><div className="bigPrice">{price ? fmt(price, 2) : "—"}</div><div className="statGrid"><div><span>ATM IV</span><b>{atm ? fmt((atm.callIv + atm.putIv) / 2, 2) + "%" : "—"}</b></div><div><span>PUT SKEW</span><b style={{ color: putSkew >= 0 ? "var(--c4)" : "var(--c1)" }}>{atm ? fmt(putSkew, 2) : "—"}</b></div></div><div className="barStage spotBarStage" aria-label="XAU GC spot gamma activity bars and reflection"><div className="miniBars spotBars">{topLevels.length ? topLevels.map((l, i) => (<i key={l.strike} style={{ height: Math.max(18, (l.gamma / maxGamma) * 100) + "%", animationDelay: `${(i % 6) * -0.19}s`, animationDuration: `${0.9 + (i % 4) * 0.16}s` }} />)) : Array.from({ length: 10 }).map((_, i) => (<i key={i} style={{ height: 6 + (i % 4) * 8 + "%", opacity: 0.25 }} />))}</div><div className="miniBars barReflection spotBars" aria-hidden="true">{topLevels.length ? topLevels.map((l, i) => (<i key={l.strike} style={{ height: Math.max(18, (l.gamma / maxGamma) * 100) + "%", animationDelay: `${(i % 6) * -0.19}s`, animationDuration: `${0.9 + (i % 4) * 0.16}s` }} />)) : Array.from({ length: 10 }).map((_, i) => (<i key={i} style={{ height: 6 + (i % 4) * 8 + "%", opacity: 0.25 }} />))}</div></div></div></section>
+        <section className="panel spotPanel accent-cyan"><div className="panelHead"><div><b>XAU / GC SPOT</b><small>{mt5Price ? "MT5 SIGNAL PRICE · NOT A QUOTE STREAM" : data.live ? "BARCHART REFERENCE" : "AWAITING DATA"}</small></div><span className={"chip " + (price ? "green" : "")}>{price ? "REFERENCE" : "—"}</span></div><div className="panelBody"><div className="bigPrice">{price ? fmt(price, 2) : "—"}</div><div className="statGrid"><div><span>ATM IV</span><b>{atm ? fmt((atm.callIv + atm.putIv) / 2, 2) + "%" : "—"}</b></div><div><span>PUT SKEW</span><b style={{ color: putSkew >= 0 ? "var(--c4)" : "var(--c1)" }}>{atm ? fmt(putSkew, 2) : "—"}</b></div></div><div className="barStage spotBarStage" aria-label="XAU GC spot gamma activity bars and reflection"><div className="miniBars spotBars">{topLevels.length ? topLevels.map((l, i) => (<i key={l.strike} style={{ height: Math.max(18, (l.gamma / maxGamma) * 100) + "%", animationDelay: `${(i % 6) * -0.19}s`, animationDuration: `${0.9 + (i % 4) * 0.16}s` }} />)) : Array.from({ length: 10 }).map((_, i) => (<i key={i} style={{ height: 6 + (i % 4) * 8 + "%", opacity: 0.25 }} />))}</div><div className="miniBars barReflection spotBars" aria-hidden="true">{topLevels.length ? topLevels.map((l, i) => (<i key={l.strike} style={{ height: Math.max(18, (l.gamma / maxGamma) * 100) + "%", animationDelay: `${(i % 6) * -0.19}s`, animationDuration: `${0.9 + (i % 4) * 0.16}s` }} />)) : Array.from({ length: 10 }).map((_, i) => (<i key={i} style={{ height: 6 + (i % 4) * 8 + "%", opacity: 0.25 }} />))}</div></div></div></section>
         <section className="panel latPanel accent-blue"><div className="panelHead"><div><b>FEED LATENCY</b><small>SIGNAL AGE · 3S POLL</small></div></div><div className="panelBody"><div className="latBig">{latLabel}</div><div className="statGrid"><div><span>BRIDGE</span><b style={{ color: mt5Live ? "var(--c2)" : "var(--c5)" }}>{mt5Live ? "UP" : "DOWN"}</b></div><div><span>CSV</span><b>{data.live ? "LOADED" : "OFF"}</b></div></div><div className="barStage latencyBarStage" aria-label="Animated feed latency bars and reflection"><div className="spark">{spark.map((v, i) => (<i key={i} style={{ height: Math.max(8, (v / 100) * 100) + "%", animationDelay: `${(i % 12) * -0.11}s`, animationDuration: `${0.72 + (i % 5) * 0.13}s` }} />))}</div><div className="spark barReflection" aria-hidden="true">{spark.map((v, i) => (<i key={i} style={{ height: Math.max(8, (v / 100) * 100) + "%", animationDelay: `${(i % 12) * -0.11}s`, animationDuration: `${0.72 + (i % 5) * 0.13}s` }} />))}</div></div></div></section>
         <section className="panel leadPanel accent-amber"><div className="panelHead"><div><b>BUY ZONES</b><small>6 RULES · NEAREST 10 STRIKES</small></div><span className="chip green">{buyZones.length} QUALIFIED</span></div><div className="panelBody scroll" style={{ padding: "2px 6px" }}>{buyZones.length ? buyZones.map((z, i) => (<div className="leadRow" key={z.strike}><span className="leadRank">{String(i + 1).padStart(2, "0")}</span><span className="leadStrike">{fmt(z.strike, 0)} <small style={{ color: "var(--muted)" }}>{z.matchedRules.join(" · ")}</small></span><span className="leadScore">{z.rulesPassed}/6</span></div>)) : (<div className="empty">No BUY zones qualify — import current Barchart data</div>)}</div></section>
         <section className="panel wirePanel accent-pink"><div className="panelHead"><div><b>WIRE INSPECTOR</b><small>MT5 INGEST</small></div></div><div className="panelBody scroll">{mt5.events.length ? mt5.events.slice(0, 40).map((e) => (<div className="wireLine" key={e.id}><span className="ts">{new Date(e.receivedAt || e.time).toLocaleTimeString()}</span>{" "}<span className="src">{e.source}</span>{" "}<span className={"tier-" + e.tier}>{e.tier}</span>{" "}<span className="ok">{fmt(e.price, 2)}</span> {e.signal.slice(0, 40)}</div>)) : (<div className="empty">No ingest yet</div>)}</div></section>
