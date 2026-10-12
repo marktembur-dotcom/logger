@@ -88,6 +88,13 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
       .flowNode{border-color:color-mix(in srgb,var(--node-color) 92%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 20%,transparent),0 0 12px color-mix(in srgb,var(--node-color) 24%,transparent),inset 0 0 16px color-mix(in srgb,var(--node-color) 11%,transparent)}
       .flowNode--small{box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 18%,transparent),0 0 9px color-mix(in srgb,var(--node-color) 20%,transparent),inset 0 0 12px color-mix(in srgb,var(--node-color) 10%,transparent)}
       .flowLabel,.flowNode b{position:relative;z-index:2}
+      .flowCore{width:max-content;max-width:calc(100% - 28px);height:30px;margin:9px auto 0;padding:0 14px;border:1px solid rgba(117,245,226,.78);border-radius:8px;background:linear-gradient(135deg,rgba(7,34,48,.98),rgba(4,17,31,.98));box-shadow:0 0 0 1px rgba(117,245,226,.16),0 0 13px rgba(117,245,226,.22),inset 0 0 13px rgba(117,245,226,.09);white-space:nowrap}
+      .flowSourceRow{top:23%}
+      .flowFeedRow{top:49%}
+      .flowLevelRow{top:68%}
+      .flowSink{top:85%;left:50%;right:auto;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);min-height:25px;padding:5px 11px;border:1px solid rgba(117,245,226,.7);border-radius:7px;background:linear-gradient(135deg,rgba(7,34,48,.98),rgba(4,17,31,.98));box-shadow:0 0 0 1px rgba(117,245,226,.14),0 0 11px rgba(117,245,226,.18),inset 0 0 12px rgba(117,245,226,.08);white-space:nowrap}
+      .flowSink small{white-space:nowrap}
+      @media(max-width:500px){.flowCore{height:27px;margin-top:7px;padding-inline:9px;font-size:8px}.flowSourceRow{top:23%}.flowFeedRow{top:49%}.flowLevelRow{top:68%}.flowSink{top:85%;gap:4px;padding:4px 6px;max-width:calc(100% - 10px)}.flowSink small{font-size:6px}}
       @media(prefers-reduced-motion:reduce){.flowWires animate{display:none}}
     `}</style>
   </section>;
