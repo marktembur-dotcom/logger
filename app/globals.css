@@ -349,3 +349,24 @@ button.ghost,button.primary{font:inherit;font-size:10px;cursor:pointer;border-ra
   .labConfluence .confMatch b{font-size:11px}
 }
 
+
+
+/* Keep all eight Neural Field readouts legible in the compact dashboard row. */
+.neuralContent{grid-template-columns:minmax(154px,.8fr) minmax(0,1.2fr)}
+.neuralMetrics{grid-template-rows:repeat(4,minmax(0,1fr));gap:3px;padding:5px;overflow:hidden}
+.neuralMetrics .neuralNode{min-height:0;padding:3px 5px;display:flex;flex-direction:column;justify-content:center;gap:1px}
+.neuralMetrics .neuralNode span{font-size:7px;line-height:1.1;letter-spacing:.15px}
+.neuralMetrics .neuralNode b{font-size:9px;line-height:1.15;margin-top:1px;overflow:visible;text-overflow:clip}
+.neuralMetrics .neuralNode{overflow:hidden}
+
+/* Separate feed and strike rows; keep the tree's animation smooth instead of heartbeat-flashing. */
+.treeBody{min-height:0}
+.treeCanvas{display:block;will-change:contents}
+.treeWrap .treeHead .neuralBadge{animation:none;box-shadow:0 0 10px rgba(57,255,232,.06)}
+@media(max-width:700px){
+  .neuralContent{grid-template-columns:minmax(135px,.9fr) minmax(0,1.1fr)}
+  .neuralMetrics{gap:2px;padding:4px}
+  .neuralMetrics .neuralNode{padding:2px 4px}
+  .neuralMetrics .neuralNode span{font-size:6px}
+  .neuralMetrics .neuralNode b{font-size:8px}
+}
