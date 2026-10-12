@@ -63,20 +63,20 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
         const u = .5 - .5 * Math.cos(p * Math.PI * 2);
         const px = (1-u)*(1-u)*x1 + 2*(1-u)*u*((x1+x2)/2) + u*u*x2;
         const py = (1-u)*(1-u)*y1 + 2*(1-u)*u*((y1+y2)/2) + u*u*y2;
-        const glow = ctx.createRadialGradient(px,py,0,px,py,8);
-        glow.addColorStop(0,"rgba(255,255,255,.95)"); glow.addColorStop(.25,color); glow.addColorStop(1,"rgba(0,0,0,0)");
-        ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(px,py,8,0,Math.PI*2); ctx.fill();
-        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(px,py,2,0,Math.PI*2); ctx.fill();
+        const glow = ctx.createRadialGradient(px,py,0,px,py,5);
+        glow.addColorStop(0,"rgba(255,255,255,.72)"); glow.addColorStop(.35,color); glow.addColorStop(1,"rgba(0,0,0,0)");
+        ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(px,py,5,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(px,py,1.5,0,Math.PI*2); ctx.fill();
       };
       // Atmospheric backdrop: a dark forest of fine vertical filaments, not a circuit grid.
       const haze = ctx.createRadialGradient(center, height*.48, 2, center, height*.48, width*.75);
-      haze.addColorStop(0,"rgba(49,210,184,.10)"); haze.addColorStop(.55,"rgba(36,75,130,.05)"); haze.addColorStop(1,"rgba(0,0,0,0)");
+      haze.addColorStop(0,"rgba(49,210,184,.065)"); haze.addColorStop(.55,"rgba(36,75,130,.035)"); haze.addColorStop(1,"rgba(0,0,0,0)");
       ctx.fillStyle = haze; ctx.fillRect(0,0,width,height);
       ctx.lineWidth = 1;
       for (let i=0;i<18;i++) {
         const x = (i/17)*width;
-        ctx.beginPath(); ctx.moveTo(x,0); ctx.bezierCurveTo(x+Math.sin(t+i)*5,height*.3,x-Math.cos(t*.7+i)*8,height*.65,x+Math.sin(t*.5+i)*4,height);
-        ctx.strokeStyle = "rgba(102,190,205,.045)"; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.bezierCurveTo(x+Math.sin(t*.22+i)*2,height*.3,x-Math.cos(t*.16+i)*3,height*.65,x+Math.sin(t*.13+i)*2,height);
+        ctx.strokeStyle = "rgba(102,190,205,.025)"; ctx.stroke();
       }
       // One bright trunk feeds three major limbs; each limb branches to its live data leaves.
       const trunk = "#75f5e2";
@@ -98,7 +98,7 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
       const node = (x:number,y:number,label:string,value:string,color:string,wide:number,large=false) => {
         const h=large?36:31, xx=Math.max(2,Math.min(width-wide-2,x-wide/2)), yy=Math.max(2,Math.min(height-h-2,y-h/2));
         ctx.save();
-        ctx.shadowColor=color; ctx.shadowBlur=large?15:8;
+        ctx.shadowColor=color; ctx.shadowBlur=large?9:4;
         rounded(xx,yy,wide,h,8);
         ctx.fillStyle="rgba(5,13,24,.94)"; ctx.fill();
         ctx.strokeStyle=color+"bb"; ctx.lineWidth=large?1.4:1; ctx.stroke();
@@ -112,9 +112,9 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
         ctx.restore();
       };
       // Core beacon.
-      const pulse=1+Math.sin(t*.55)*.035;
-      ctx.beginPath(); ctx.arc(center,topY,10*pulse,0,Math.PI*2); ctx.fillStyle="rgba(117,245,226,.12)"; ctx.fill();
-      ctx.beginPath(); ctx.arc(center,topY,5*pulse,0,Math.PI*2); ctx.fillStyle=trunk; ctx.shadowColor=trunk; ctx.shadowBlur=18; ctx.fill(); ctx.shadowBlur=0;
+      const pulse=1;
+      ctx.beginPath(); ctx.arc(center,topY,10*pulse,0,Math.PI*2); ctx.fillStyle="rgba(117,245,226,.07)"; ctx.fill();
+      ctx.beginPath(); ctx.arc(center,topY,5*pulse,0,Math.PI*2); ctx.fillStyle=trunk; ctx.shadowColor=trunk; ctx.shadowBlur=9; ctx.fill(); ctx.shadowBlur=0;
       ctx.font="700 9px 'IBM Plex Mono',monospace"; ctx.textAlign="center"; ctx.fillStyle="#eafffb"; ctx.fillText("GC COMMAND CORE",center,topY-14);
       model.sources.forEach((s,i)=>node(sourceXs[i],sourceY,s.label,s.value,s.color,compact?86:112,true));
       model.feeds.forEach((f,i)=>node(branchXs[i],feedY,f.label,f.value,f.color,compact?68:88));
@@ -122,7 +122,7 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
       // Converging trunk and terminal dashboard.
       const convergenceY=sinkY-14;
       [0,1,2].forEach((i)=>strokeBranch(sourceXs[i],sourceY+20,center,convergenceY,trunk+"55",i*.31,.9));
-      ctx.beginPath(); ctx.arc(center,convergenceY,3.2,0,Math.PI*2); ctx.fillStyle="#75f5e2"; ctx.shadowColor="#75f5e2"; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
+      ctx.beginPath(); ctx.arc(center,convergenceY,3.2,0,Math.PI*2); ctx.fillStyle="#75f5e2"; ctx.shadowColor="#75f5e2"; ctx.shadowBlur=6; ctx.fill(); ctx.shadowBlur=0;
       const label="GOLD LAB";
       ctx.font="700 8px 'IBM Plex Mono',monospace"; ctx.textAlign="center"; ctx.fillStyle="#eafffb"; ctx.fillText(label,center,sinkY-1);
       ctx.font="7px 'IBM Plex Mono',monospace"; ctx.fillStyle="rgba(157,194,203,.9)"; ctx.fillText(eventCountLabel(),center,sinkY+8);
