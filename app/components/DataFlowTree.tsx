@@ -85,6 +85,9 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
       .flowSink>span{width:5px;height:5px;border-radius:50%;background:#75f5e2}
       .flowSink small{font:7px 'IBM Plex Mono',monospace;color:#86aebc;letter-spacing:0}
       @media(max-width:500px){.flowBody{min-height:270px;padding-inline:7px}.flowSourceRow,.flowFeedRow,.flowLevelRow{left:7px;right:7px;gap:4px}.flowNode{padding:4px 5px}.flowLabel{font-size:7px}.flowNode--small .flowLabel{font-size:6px}.flowNode b,.flowNode--small b{font-size:6px}.flowSink{gap:4px}.flowSink small{font-size:6px}}
+      .flowNode{border-color:color-mix(in srgb,var(--node-color) 92%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 20%,transparent),0 0 12px color-mix(in srgb,var(--node-color) 24%,transparent),inset 0 0 16px color-mix(in srgb,var(--node-color) 11%,transparent)}
+      .flowNode--small{box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 18%,transparent),0 0 9px color-mix(in srgb,var(--node-color) 20%,transparent),inset 0 0 12px color-mix(in srgb,var(--node-color) 10%,transparent)}
+      .flowLabel,.flowNode b{position:relative;z-index:2}
       @media(prefers-reduced-motion:reduce){.flowWires animate{display:none}}
     `}</style>
   </section>;
