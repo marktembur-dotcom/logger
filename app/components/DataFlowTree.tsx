@@ -77,7 +77,7 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
       ctx.lineWidth = 1;
       for (let i=0;i<18;i++) {
         const x = (i/17)*width;
-        ctx.beginPath(); ctx.moveTo(x,0); ctx.bezierCurveTo(x,height*.3,x,height);
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.bezierCurveTo(x,height*.3,x,height*.65,x,height);
         ctx.strokeStyle = "rgba(102,190,205,.025)"; ctx.stroke();
       }
       // One bright trunk feeds three major limbs; each limb branches to its live data leaves.
