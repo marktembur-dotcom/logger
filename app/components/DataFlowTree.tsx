@@ -49,11 +49,13 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
       const compact = width < 360;
       const left = compact ? 16 : 22, right = width - left;
       const center = width / 2;
-      const topY = 28, sourceY = Math.max(82, height * 0.34);
-      const branchY = Math.max(sourceY + 46, height * 0.62);
-      const sinkY = height - 28;
+      const topY = 22;
+      const sourceY = Math.max(54, height * 0.29);
+      const feedY = Math.min(height - 76, Math.max(sourceY + 42, height * 0.54));
+      const levelY = Math.min(height - 38, Math.max(feedY + 34, height * 0.76));
+      const sinkY = height - 11;
       const sourceXs = [left + (right-left)*.17, center, right - (right-left)*.17];
-      const branchXs = [left + (right-left)*.13, left + (right-left)*.36, left + (right-left)*.64, right - (right-left)*.13];
+      const branchXs = [left + (right-left)*.13, left + (right-left)*.37, left + (right-left)*.63, right - (right-left)*.13];
       const strokeBranch = (x1:number,y1:number,x2:number,y2:number,color:string,phase:number,thick=1.3) => {
         ctx.beginPath(); ctx.moveTo(x1,y1); ctx.bezierCurveTo(x1,y1+18,x2,y2-18,x2,y2);
         ctx.strokeStyle = color; ctx.lineWidth = thick; ctx.stroke();
@@ -82,14 +84,14 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
       sourceXs.forEach((x,i) => strokeBranch(center,sourceY-18,x,sourceY,i===0?"rgba(85,242,196,.65)":i===1?"rgba(255,200,107,.65)":"rgba(121,170,255,.65)",i*.23,1.7));
       model.sources.forEach((s,i) => {
         const x=sourceXs[i], y=sourceY;
-        strokeBranch(x,y+17,branchXs[i],branchY-15,s.color+"99",i*.17,1.2);
+        strokeBranch(x,y+17,branchXs[i],feedY-16,s.color+"99",i*.17,1.2);
         if (i===0) model.feeds.forEach((f,j) => {
-          const bx=branchXs[j], by=branchY;
-          strokeBranch(branchXs[0],branchY-14,bx,by,f.color+"88",j*.13,1.1);
+          const bx=branchXs[j], by=feedY;
+          strokeBranch(sourceXs[0],sourceY+18,bx,by,f.color+"88",j*.13,1.1);
         });
         if (i===1) model.levels.forEach((l,j) => {
-          const bx=branchXs[j], by=branchY;
-          strokeBranch(branchXs[1],branchY-14,bx,by,l.color+"88",j*.12+.2,1.1);
+          const bx=branchXs[j], by=levelY;
+          strokeBranch(sourceXs[1],sourceY+18,bx,by,l.color+"88",j*.12+.2,1.1);
         });
       });
       // Draw clear, pill-shaped source nodes.
@@ -110,20 +112,20 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
         ctx.restore();
       };
       // Core beacon.
-      const pulse=1+Math.max(0,Math.sin(t*2.2))*.18;
+      const pulse=1+Math.sin(t*.55)*.035;
       ctx.beginPath(); ctx.arc(center,topY,10*pulse,0,Math.PI*2); ctx.fillStyle="rgba(117,245,226,.12)"; ctx.fill();
       ctx.beginPath(); ctx.arc(center,topY,5*pulse,0,Math.PI*2); ctx.fillStyle=trunk; ctx.shadowColor=trunk; ctx.shadowBlur=18; ctx.fill(); ctx.shadowBlur=0;
       ctx.font="700 9px 'IBM Plex Mono',monospace"; ctx.textAlign="center"; ctx.fillStyle="#eafffb"; ctx.fillText("GC COMMAND CORE",center,topY-14);
       model.sources.forEach((s,i)=>node(sourceXs[i],sourceY,s.label,s.value,s.color,compact?86:112,true));
-      model.feeds.forEach((f,i)=>node(branchXs[i],branchY,f.label,f.value,f.color,compact?68:88));
-      model.levels.forEach((l,i)=>node(branchXs[i],branchY+Math.min(37,Math.max(24,(sinkY-branchY)*.48)),l.label,l.value,l.color,compact?68:88));
+      model.feeds.forEach((f,i)=>node(branchXs[i],feedY,f.label,f.value,f.color,compact?68:88));
+      model.levels.forEach((l,i)=>node(branchXs[i],levelY,l.label,l.value,l.color,compact?68:88));
       // Converging trunk and terminal dashboard.
-      const convergenceY=sinkY-20;
+      const convergenceY=sinkY-14;
       [0,1,2].forEach((i)=>strokeBranch(sourceXs[i],sourceY+20,center,convergenceY,trunk+"55",i*.31,.9));
-      ctx.beginPath(); ctx.arc(center,convergenceY,4+Math.sin(t*2)*.8,0,Math.PI*2); ctx.fillStyle="#75f5e2"; ctx.shadowColor="#75f5e2"; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
+      ctx.beginPath(); ctx.arc(center,convergenceY,3.2,0,Math.PI*2); ctx.fillStyle="#75f5e2"; ctx.shadowColor="#75f5e2"; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
       const label="GOLD LAB";
-      ctx.font="700 8px 'IBM Plex Mono',monospace"; ctx.textAlign="center"; ctx.fillStyle="#eafffb"; ctx.fillText(label,center,sinkY+1);
-      ctx.font="7px 'IBM Plex Mono',monospace"; ctx.fillStyle="rgba(157,194,203,.9)"; ctx.fillText(eventCountLabel(),center,sinkY+12);
+      ctx.font="700 8px 'IBM Plex Mono',monospace"; ctx.textAlign="center"; ctx.fillStyle="#eafffb"; ctx.fillText(label,center,sinkY-1);
+      ctx.font="7px 'IBM Plex Mono',monospace"; ctx.fillStyle="rgba(157,194,203,.9)"; ctx.fillText(eventCountLabel(),center,sinkY+8);
       function eventCountLabel(){ return eventCount + " EVENTS  /  " + levels.length + " ZONES"; }
       raf=requestAnimationFrame(draw);
     };
