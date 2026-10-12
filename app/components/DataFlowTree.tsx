@@ -104,7 +104,7 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
         ctx.fillStyle=color; ctx.beginPath(); ctx.arc(xx+9,yy+10,2.6,0,Math.PI*2); ctx.fill();
         ctx.textAlign="left"; ctx.textBaseline="middle";
         ctx.font=large?"700 9px 'IBM Plex Mono',monospace":"600 8px 'IBM Plex Mono',monospace";
-        ctx.fillStyle="#f1fffd"; ctx.fillText(label,xx+16,yy+10,{ } as any);
+        ctx.fillStyle="#f1fffd"; ctx.fillText(label,xx+16,yy+10);
         ctx.font="7px 'IBM Plex Mono',monospace"; ctx.fillStyle=color;
         ctx.fillText(value,xx+8,yy+23);
         ctx.restore();
