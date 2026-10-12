@@ -62,7 +62,7 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
         // Only the connector itself moves: subtle dashes travel along the steady line.
         ctx.save();
         ctx.beginPath(); ctx.moveTo(x1,y1); ctx.bezierCurveTo(x1,y1+18,x2,y2-18,x2,y2);
-        ctx.strokeStyle = color.slice(0,7) + "cc";
+        ctx.strokeStyle = color;
         ctx.lineWidth = Math.max(1, thick * 1.05);
         ctx.setLineDash([4, 13]);
         ctx.lineDashOffset = -(t * 7 + phase * 17);
