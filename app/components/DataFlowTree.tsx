@@ -116,6 +116,30 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
       .flowSink small{white-space:nowrap}
       @media(max-width:500px){.flowBody{padding-inline:5px}.flowCore{height:25px;margin-top:5px;padding-inline:7px;font-size:7px}.flowDataField{left:5px;right:5px;border-radius:7px}.flowDataField--sources{top:19%;height:19%}.flowDataField--feeds{top:42%;height:17%}.flowDataField--levels{top:61%;height:17%}.flowFieldTag{font-size:5.4px;left:6px}.flowSourceRow,.flowFeedRow,.flowLevelRow{left:4px;right:4px;gap:3px}.flowSourceRow .flowLabel,.flowSourceRow .flowNode b{font-size:5.8px}.flowNode--small .flowLabel,.flowNode--small b{font-size:5.8px}.flowSink{top:81%;gap:3px;padding:3px 5px;max-width:calc(100% - 8px)}.flowSink small{font-size:5.6px}}
       @media(prefers-reduced-motion:reduce){.flowWires animate{display:none}}
-    `}</style>
+    `}
+      /* Individual framed data cards: no shared row containers */
+      .flowSourceRow,.flowFeedRow,.flowLevelRow{position:absolute;left:8px;right:8px;display:grid;align-items:center;transform:none;top:auto;gap:6px;z-index:2}
+      .flowSourceRow{top:22%;grid-template-columns:repeat(3,minmax(0,1fr))}
+      .flowFeedRow{top:45%;grid-template-columns:repeat(4,minmax(0,1fr))}
+      .flowLevelRow{top:64%;grid-template-columns:repeat(4,minmax(0,1fr))}
+      .flowDataField{display:none}
+      .flowNode{box-sizing:border-box;width:100%;height:43px;min-width:0;padding:4px 6px;border-width:1px;border-style:solid;border-color:var(--node-color)!important;border-radius:7px;background:linear-gradient(145deg,color-mix(in srgb,var(--node-color) 16%,#071729),rgba(3,11,24,.98))!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 25%,transparent),0 0 12px color-mix(in srgb,var(--node-color) 22%,transparent),inset 0 0 12px color-mix(in srgb,var(--node-color) 10%,transparent)!important;overflow:hidden}
+      .flowNode--small{height:37px;padding:3px 5px}
+      .flowLabel,.flowNode b{display:block;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:0}
+      .flowLabel{font-size:clamp(5px,.65vw,8px)!important}
+      .flowNode b{font-size:clamp(5px,.62vw,7px)!important}
+      .flowSourceRow .flowNode:nth-child(3n+1),.flowFeedRow .flowNode:nth-child(4n+1),.flowLevelRow .flowNode:nth-child(4n+1){--node-color:#55f2c4!important}
+      .flowSourceRow .flowNode:nth-child(3n+2),.flowFeedRow .flowNode:nth-child(4n+2),.flowLevelRow .flowNode:nth-child(4n+2){--node-color:#ffc86b!important}
+      .flowSourceRow .flowNode:nth-child(3n+3),.flowFeedRow .flowNode:nth-child(4n+3),.flowLevelRow .flowNode:nth-child(4n+3){--node-color:#79aaff!important}
+      .flowFeedRow .flowNode:nth-child(4n),.flowLevelRow .flowNode:nth-child(4n){--node-color:#c69bff!important}
+      .flowSink{z-index:3}
+      @media(max-width:500px){
+        .flowSourceRow,.flowFeedRow,.flowLevelRow{left:5px;right:5px;gap:3px}
+        .flowSourceRow .flowNode{height:38px;padding:3px 4px}
+        .flowFeedRow .flowNode,.flowLevelRow .flowNode{height:34px;padding:3px 4px}
+        .flowLabel{font-size:clamp(5px,1.35vw,6.5px)!important}
+        .flowNode b{font-size:clamp(5px,1.3vw,6px)!important}
+      }
+    </style>
   </section>;
 }
