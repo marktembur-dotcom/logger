@@ -12,134 +12,124 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
     const active = feeds.some(f => f.active);
     return {
       sources: [
-        { label: "MT5 SIGNALS", value: active ? "CONNECTED" : "WAITING", color: "#55f2c4" },
-        { label: "BARCHART DATA", value: csvLive ? "IMPORT READY" : "NO IMPORT", color: "#ffc86b" },
-        { label: "GOLD SPOT", value: price ? price.toFixed(2) : "PRICE WAITING", color: "#79aaff" },
+        { label: "MT5 SIGNALS", value: active ? "CONNECTED" : "WAITING", color: "#5ef5cf" },
+        { label: "BARCHART DATA", value: csvLive ? "IMPORT READY" : "NO IMPORT", color: "#ffc66d" },
+        { label: "GOLD SPOT", value: price ? price.toFixed(2) : "PRICE WAITING", color: "#80aaff" },
       ],
-      feeds: feeds.slice(0, 4).map(f => ({ label: f.source, value: f.active ? (f.tier || "ACTIVE").toUpperCase() : "IDLE", color: f.tier === "confirmed" ? "#55f2c4" : f.tier === "partial" ? "#ffc86b" : "#79aaff" })),
-      levels: levels.slice(0, 4).map(l => ({ label: String(l.strike), value: (l.side || "ZONE").toUpperCase() + " · " + l.score, color: l.side?.toLowerCase() === "sell" ? "#ff7b9c" : "#55f2c4" })),
       activeCount: feeds.filter(f => f.active).length + (csvLive ? 1 : 0) + (price ? 1 : 0),
     };
-  }, [feeds, levels, csvLive, price]);
+  }, [feeds, csvLive, price]);
 
-  const connector = (d: string, color: string, delay = 0) => (
-    <g key={d}>
-      <path d={d} fill="none" stroke={color} strokeOpacity=".18" strokeWidth="2.8" />
-      <path d={d} fill="none" stroke={color} strokeOpacity=".42" strokeWidth="3.8" strokeDasharray="1 30" strokeLinecap="round" filter="url(#flowEnergyGlow)">
-        <animate attributeName="stroke-dashoffset" from="0" to="-62" dur="2.1s" begin={`${delay}s`} repeatCount="indefinite" />
-      </path>
-      <path d={d} fill="none" stroke={color} strokeOpacity=".98" strokeWidth="1.6" strokeDasharray="7 31" strokeLinecap="round">
-        <animate attributeName="stroke-dashoffset" from="38" to="-38" dur="2.7s" begin={`${delay}s`} repeatCount="indefinite" />
-      </path>
-      <circle r="2.1" fill={color} filter="url(#flowEnergyGlow)">
-        <animateMotion path={d} dur="3.4s" begin={`${delay}s`} repeatCount="indefinite" rotate="auto" />
-      </circle>
-    </g>
+  const sourceTone = (i: number) => ["mint", "amber", "blue"][i % 3];
+  const feedTone = (feed: Feed, i: number) => feed.tier?.toLowerCase() === "confirmed" ? "mint" : feed.tier?.toLowerCase() === "partial" ? "amber" : ["blue", "violet", "mint", "amber"][i % 4];
+  const levelTone = (level: Level, i: number) => level.side?.toLowerCase() === "sell" ? "rose" : ["mint", "blue", "amber", "violet"][i % 4];
+
+  return (
+    <section className="treeWrap">
+      <header className="treeHead">
+        <div className="heading">
+          <span className="eyebrow"><i /> SYSTEM TOPOLOGY / LIVE</span>
+          <b>DATA FLOW TREE</b>
+          <small>Cross-source signal routing</small>
+        </div>
+        <div className="liveCount"><span />{model.activeCount} LIVE</div>
+      </header>
+
+      <div className="treeCanvas">
+        <div className="ambient ambientA" />
+        <div className="ambient ambientB" />
+        <svg className="flowWires" viewBox="0 0 1000 500" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="wireGradient" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stopColor="#5ef5cf" />
+              <stop offset="50%" stopColor="#80aaff" />
+              <stop offset="100%" stopColor="#c49aff" />
+            </linearGradient>
+            <filter id="wireGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+          </defs>
+          <path className="wireBase" d="M500 55 V112 M500 112 C500 140 165 126 165 174 M500 112 V174 M500 112 C500 140 835 126 835 174 M165 224 C165 265 250 248 250 292 M500 224 V292 M835 224 C835 265 750 248 750 292 M250 346 C250 390 500 368 500 414 M500 346 V414 M750 346 C750 390 500 368 500 414" />
+          <path className="wireEnergy" d="M500 55 V112 M500 112 C500 140 165 126 165 174 M500 112 V174 M500 112 C500 140 835 126 835 174 M165 224 C165 265 250 248 250 292 M500 224 V292 M835 224 C835 265 750 248 750 292 M250 346 C250 390 500 368 500 414 M500 346 V414 M750 346 C750 390 500 368 500 414" />
+          <circle r="4" className="packet"><animateMotion dur="4.2s" repeatCount="indefinite" path="M500 55 V112 C500 140 165 126 165 174 V224 C165 265 250 248 250 292 V346 C250 390 500 368 500 414" /></circle>
+          <circle r="3.5" className="packet packet2"><animateMotion dur="3.7s" begin="-1.2s" repeatCount="indefinite" path="M500 55 V112 C500 140 835 126 835 174 V224 C835 265 750 248 750 292 V346 C750 390 500 368 500 414" /></circle>
+          <circle r="3" className="packet packet3"><animateMotion dur="2.9s" begin="-2s" repeatCount="indefinite" path="M500 55 V112 V174 V224 V292 V346 V414" /></circle>
+        </svg>
+
+        <div className="coreNode">
+          <span className="coreIcon"><i /><i /><i /></span>
+          <span><small>PROCESSING HUB</small><b>GC COMMAND CORE</b></span>
+          <span className="coreState">ONLINE</span>
+        </div>
+
+        <div className="sourceGrid">
+          {model.sources.map((item, i) => (
+            <div className={`dataCard sourceCard ${sourceTone(i)}`} key={item.label}>
+              <div className="cardTop"><span className="cardGlyph">{i === 0 ? "↗" : i === 1 ? "▤" : "◉"}</span><span className="statusPip" /></div>
+              <span className="cardLabel">{item.label}</span>
+              <b className="cardValue">{item.value}</b>
+            </div>
+          ))}
+        </div>
+
+        <div className="sectionLabel"><span>01</span> SIGNAL CHANNELS <i /> <small>{feeds.length} TOTAL</small></div>
+        <div className="feedGrid">
+          {feeds.length ? feeds.map((feed, i) => (
+            <div className={`dataCard compactCard ${feedTone(feed, i)}`} key={`${feed.source}-${i}`}>
+              <div className="compactHead"><span className="miniGlyph">⌁</span><span className={feed.active ? "stateTag active" : "stateTag"}>{feed.active ? "ACTIVE" : "IDLE"}</span></div>
+              <span className="cardLabel" title={feed.source}>{feed.source || "SIGNAL FEED"}</span>
+              <b className="cardValue">{(feed.tier || (feed.active ? "LIVE" : "STANDBY")).toUpperCase()}</b>
+              {feed.signal ? <small className="extraValue" title={feed.signal}>{feed.signal}</small> : null}
+              {typeof feed.price === "number" ? <small className="extraValue">{feed.price.toFixed(2)}</small> : null}
+            </div>
+          )) : <div className="emptyState">Awaiting MT5 signal channels…</div>}
+        </div>
+
+        <div className="sectionLabel levelLabel"><span>02</span> QUALIFIED ZONES <i /> <small>{levels.length} TOTAL</small></div>
+        <div className="levelGrid">
+          {levels.length ? levels.map((level, i) => (
+            <div className={`dataCard zoneCard ${levelTone(level, i)}`} key={`${level.strike}-${level.side}-${i}`}>
+              <div className="zoneHead"><span className="zoneSide">{(level.side || "ZONE").toUpperCase()}</span><span className="zoneIndex">{String(i + 1).padStart(2, "0")}</span></div>
+              <b className="zoneStrike">{level.strike.toLocaleString()}</b>
+              <div className="scoreTrack"><span style={{ width: `${Math.max(0, Math.min(100, Number(level.score) || 0))}%` }} /></div>
+              <small className="zoneScore">MATCH SCORE <strong>{level.score}</strong></small>
+            </div>
+          )) : <div className="emptyState">No qualified zones yet — waiting for a fresh match.</div>}
+        </div>
+
+        <div className="treeFooter">
+          <span className="footerMark"><i />GOLD LAB</span>
+          <span>{eventCount} EVENTS <b>·</b> {levels.length} ZONES</span>
+          <span className={csvLive ? "feedHealth healthy" : "feedHealth"}><i />{csvLive ? "BARCHART SYNCED" : "BARCHART OFFLINE"}</span>
+        </div>
+      </div>
+
+      <style jsx>{`
+        .treeWrap{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(105,167,202,.24);border-radius:15px;background:#06101e;color:#eaf5ff;font-family:'IBM Plex Mono',ui-monospace,monospace;box-shadow:0 14px 40px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.035)}
+        .treeHead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 15px;border-bottom:1px solid rgba(120,175,210,.15);background:linear-gradient(105deg,rgba(17,37,59,.95),rgba(7,18,33,.96));flex:none}
+        .heading{display:flex;flex-direction:column;gap:3px;min-width:0}.eyebrow{display:flex;align-items:center;gap:6px;color:#6d9bb4;font-size:8px;letter-spacing:1.25px}.eyebrow i,.liveCount span{width:6px;height:6px;border-radius:50%;background:#5ef5cf;box-shadow:0 0 9px #5ef5cf}.heading>b{font-size:12px;letter-spacing:1.3px;color:#f0f8ff}.heading small{font-size:9px;color:#7896ab}
+        .liveCount{display:flex;align-items:center;gap:7px;white-space:nowrap;border:1px solid rgba(94,245,207,.25);border-radius:999px;padding:6px 9px;color:#8ef8dc;background:rgba(94,245,207,.06);font-size:8px;letter-spacing:.5px}
+        .treeCanvas{position:relative;isolation:isolate;flex:1;min-height:0;overflow:auto;padding:12px 12px 9px;background:radial-gradient(ellipse at 50% 15%,rgba(30,102,138,.19),transparent 52%),linear-gradient(180deg,#081729 0%,#050e1c 100%);scrollbar-width:thin;scrollbar-color:#2d5369 #081321}
+        .treeCanvas::-webkit-scrollbar{width:5px}.treeCanvas::-webkit-scrollbar-thumb{background:#2d5369;border-radius:8px}
+        .ambient{position:absolute;z-index:-1;width:180px;height:180px;border-radius:50%;filter:blur(55px);opacity:.13;pointer-events:none}.ambientA{background:#36e5c1;top:18%;left:-100px}.ambientB{background:#7c7bff;top:48%;right:-100px}
+        .flowWires{position:absolute;z-index:-1;inset:0;width:100%;height:100%;pointer-events:none;opacity:.9}.wireBase{fill:none;stroke:rgba(97,164,197,.17);stroke-width:1.5;vector-effect:non-scaling-stroke}.wireEnergy{fill:none;stroke:url(#wireGradient);stroke-width:1.5;stroke-linecap:round;stroke-dasharray:2 18;filter:url(#wireGlow);animation:wireDrift 2.8s linear infinite;vector-effect:non-scaling-stroke}.packet{fill:#5ef5cf;filter:url(#wireGlow)}.packet2{fill:#80aaff}.packet3{fill:#c49aff}
+        .coreNode{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:10px;width:max-content;max-width:100%;margin:0 auto 15px;padding:8px 13px;border:1px solid rgba(94,245,207,.55);border-radius:10px;background:linear-gradient(135deg,rgba(10,39,53,.97),rgba(6,20,36,.98));box-shadow:0 0 0 1px rgba(94,245,207,.07),0 0 24px rgba(57,225,194,.12),inset 0 0 20px rgba(94,245,207,.055)}
+        .coreIcon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;gap:2px;border:1px solid rgba(94,245,207,.32);border-radius:6px;background:rgba(94,245,207,.08)}.coreIcon i{width:3px;border-radius:2px;background:#5ef5cf;height:7px}.coreIcon i:nth-child(2){height:13px}.coreIcon i:nth-child(3){height:9px}.coreNode>span:nth-child(2){display:flex;flex-direction:column;gap:3px}.coreNode small{font-size:7px;letter-spacing:1.2px;color:#70b8b1}.coreNode b{font-size:10px;letter-spacing:.6px;color:#e6fff9}.coreState{font-size:7px;color:#5ef5cf;border-left:1px solid rgba(94,245,207,.22);padding-left:10px}
+        .sourceGrid,.feedGrid,.levelGrid{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+        .dataCard{--tone:#80aaff;position:relative;min-width:0;overflow:hidden;border:1px solid color-mix(in srgb,var(--tone) 50%,rgba(92,132,163,.18));border-radius:9px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 8%,#0b1b2d),rgba(5,14,27,.98) 78%);box-shadow:inset 0 1px rgba(255,255,255,.025),0 5px 14px rgba(0,0,0,.12);padding:8px 9px;transition:border-color .2s,background .2s}
+        .dataCard:before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:2px;border-radius:0 2px 2px 0;background:var(--tone);box-shadow:0 0 9px var(--tone);opacity:.85}.dataCard:after{content:"";position:absolute;top:0;right:0;width:34px;height:34px;background:radial-gradient(circle at top right,color-mix(in srgb,var(--tone) 13%,transparent),transparent 72%);pointer-events:none}
+        .mint{--tone:#5ef5cf}.amber{--tone:#ffc66d}.blue{--tone:#80aaff}.violet{--tone:#c49aff}.rose{--tone:#ff86a5}
+        .sourceCard{min-height:76px}.cardTop,.compactHead,.zoneHead{display:flex;align-items:center;justify-content:space-between;gap:6px}.cardGlyph{color:var(--tone);font-size:15px;line-height:1}.statusPip{width:5px;height:5px;border-radius:50%;background:var(--tone);box-shadow:0 0 8px var(--tone)}.cardLabel{display:block;min-width:0;overflow-wrap:anywhere;color:#8ca8bd;font-size:clamp(7px,.68vw,9px);line-height:1.35;letter-spacing:.35px;margin-top:5px}.cardValue{display:block;min-width:0;overflow-wrap:anywhere;color:var(--tone);font-size:clamp(8px,.78vw,10px);line-height:1.35;margin-top:4px;font-weight:700}
+        .sectionLabel{position:relative;z-index:1;display:flex;align-items:center;gap:7px;margin:15px 1px 7px;color:#a9c3d6;font-size:8px;letter-spacing:1px}.sectionLabel>span{color:#5ef5cf;font-size:8px}.sectionLabel>i{height:1px;flex:1;background:linear-gradient(90deg,rgba(91,160,192,.3),transparent)}.sectionLabel small{font-size:7px;color:#6d8ca3;letter-spacing:.5px;white-space:nowrap}
+        .feedGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.compactCard{min-height:66px;padding:7px 7px 6px}.miniGlyph{color:var(--tone);font-size:13px;line-height:1}.stateTag{font-size:6px;letter-spacing:.5px;color:#9ab0c0;border:1px solid rgba(140,168,189,.18);border-radius:4px;padding:2px 4px}.stateTag.active{color:var(--tone);border-color:color-mix(in srgb,var(--tone) 35%,transparent);background:color-mix(in srgb,var(--tone) 7%,transparent)}.compactCard .cardLabel{font-size:clamp(6px,.6vw,8px);margin-top:6px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.compactCard .cardValue{font-size:clamp(7px,.65vw,9px);margin-top:3px}.extraValue{display:block;color:#7896ac;font-size:7px;margin-top:3px;overflow-wrap:anywhere}
+        .levelLabel{margin-top:15px}.levelGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.zoneCard{padding:7px 8px;min-height:73px}.zoneSide{font-size:7px;letter-spacing:.8px;color:var(--tone)}.zoneIndex{font-size:7px;color:#4d6c82}.zoneStrike{display:block;margin-top:6px;color:#f1f7ff;font-size:clamp(11px,1vw,14px);line-height:1.1;letter-spacing:.3px}.scoreTrack{height:3px;background:rgba(140,172,194,.12);border-radius:4px;margin-top:7px;overflow:hidden}.scoreTrack span{display:block;height:100%;background:var(--tone);box-shadow:0 0 8px var(--tone);border-radius:4px}.zoneScore{display:flex;justify-content:space-between;gap:5px;margin-top:5px;color:#718ca2;font-size:6px;letter-spacing:.55px}.zoneScore strong{color:var(--tone);font-size:7px}.emptyState{grid-column:1/-1;border:1px dashed rgba(112,155,183,.25);border-radius:8px;padding:12px;text-align:center;color:#718ca2;font-size:8px}
+        .treeFooter{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:12px;padding:9px 2px 1px;border-top:1px solid rgba(120,175,210,.12);color:#718da4;font-size:7px;letter-spacing:.5px}.treeFooter b{color:#34566c;margin:0 3px}.footerMark{display:flex;align-items:center;gap:5px;color:#b8d8e4;font-weight:700}.footerMark i{width:5px;height:5px;border-radius:50%;background:#5ef5cf}.feedHealth{display:flex;align-items:center;gap:5px;color:#ffbd79}.feedHealth i{width:5px;height:5px;border-radius:50%;background:currentColor}.feedHealth.healthy{color:#5ef5cf}
+        @keyframes wireDrift{to{stroke-dashoffset:-40}}
+        @media(min-width:900px){.treeCanvas{padding:13px 14px 10px}.sourceGrid{gap:10px}.feedGrid,.levelGrid{gap:8px}.dataCard{padding-left:11px;padding-right:11px}}
+        @media(max-width:560px){.treeHead{padding:10px 11px}.treeCanvas{padding:10px 8px 8px}.heading>b{font-size:11px}.heading small{font-size:8px}.sourceGrid{gap:5px}.sourceCard{padding:7px 6px;min-height:68px}.sourceCard .cardLabel{font-size:6.5px;letter-spacing:0}.sourceCard .cardValue{font-size:7.5px}.feedGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.compactCard{min-height:61px}.compactCard .cardLabel{font-size:8px}.compactCard .cardValue{font-size:8px}.levelGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.zoneCard{min-height:69px}.treeFooter{font-size:6.5px}}
+        @media(prefers-reduced-motion:reduce){.wireEnergy{animation:none;stroke-dasharray:none;opacity:.45}.packet{display:none}.dataCard{transition:none}}
+      `}</style>
+    </section>
   );
-
-  const card = (label: string, value: string, color: string, compact = false) => (
-    <div className={compact ? "flowNode flowNode--small" : "flowNode"} key={label + value} style={{ "--node-color": color } as React.CSSProperties}>
-      <span className="flowDot" />
-      <span className="flowLabel">{label}</span>
-      <b>{value}</b>
-    </div>
-  );
-
-  return <section className="treeWrap treeWrap--organic treeWrap--flow">
-    <header className="treeHead">
-      <div><b>DATA FLOW TREE</b><small>LIVE DATA STREAM · CONTINUOUS CONFLUENCE</small></div>
-      <span className="neuralBadge">{model.activeCount} LIVE</span>
-    </header>
-    <div className="treeBody flowBody">
-      <div className="flowCore"><span className="coreRing" /><b>GC COMMAND CORE</b></div>
-      <svg className="flowWires" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true">
-        <defs>
-          <filter id="flowEnergyGlow" x="-80%" y="-80%" width="260%" height="260%">
-            <feGaussianBlur stdDeviation="2.4" result="softGlow" />
-            <feMerge><feMergeNode in="softGlow" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-        </defs>
-        {connector("M500 24 V62", "#75f5e2")}
-        {connector("M500 62 C500 80 170 74 170 104", "#55f2c4", .2)}
-        {connector("M500 62 V104", "#ffc86b", .55)}
-        {connector("M500 62 C500 80 830 74 830 104", "#79aaff", .9)}
-        {connector("M170 148 C170 175 125 172 125 202", "#55f2c4", .15)}
-        {connector("M500 148 C500 175 375 172 375 202", "#ffc86b", .5)}
-        {connector("M830 148 C830 175 625 172 625 202", "#79aaff", .85)}
-        {connector("M170 148 C170 220 875 170 875 202", "#55f2c4", 1.1)}
-        {connector("M125 240 V270 H500", "#55f2c4", .2)}
-        {connector("M375 240 V270 H500", "#ffc86b", .55)}
-        {connector("M625 240 V270 H500", "#79aaff", .9)}
-        {connector("M875 240 V270 H500", "#55f2c4", 1.2)}
-        {connector("M500 270 V310", "#75f5e2", .35)}
-      </svg>
-      <div className="flowSourceRow">{model.sources.map(s => card(s.label, s.value, s.color))}</div>
-      <div className="flowFeedRow">{model.feeds.map((f, i) => card(f.label, f.value, ["#55f2c4", "#ffc86b", "#79aaff", "#c69bff"][i % 4], true))}</div>
-      <div className="flowLevelRow">{model.levels.map((l, i) => card(l.label, l.value, l.color === "#ff7b9c" ? l.color : ["#55f2c4", "#79aaff", "#ffc86b", "#c69bff"][i % 4], true))}</div>
-      <div className="flowSink"><span />GOLD LAB <small>{eventCount} EVENTS / {levels.length} ZONES</small></div>
-    </div>
-    <style jsx>{`
-      .treeWrap--flow{overflow:hidden}
-      .flowBody{position:relative;min-height:0;height:100%;padding:0 8px 4px;overflow:hidden;background:radial-gradient(ellipse at 50% 38%,rgba(35,120,155,.14),transparent 58%),linear-gradient(180deg,rgba(5,17,34,.4),rgba(3,10,21,.96))}
-      .flowCore{height:49px;display:flex;align-items:center;justify-content:center;gap:9px;position:relative;z-index:2;color:#eafffb;font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.8px}
-      .coreRing{width:9px;height:9px;border-radius:50%;background:#75f5e2;box-shadow:0 0 0 4px rgba(117,245,226,.10);flex:none}
-      .flowWires{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
-      .flowWires path{vector-effect:non-scaling-stroke}
-      .flowWires circle{opacity:.95}
-      @media(prefers-reduced-motion:reduce){.flowWires animate,.flowWires circle{display:none}}
-      .flowDataField{position:absolute;left:8px;right:8px;z-index:1;border:1px solid rgba(99,190,220,.34);border-radius:10px;background:linear-gradient(135deg,rgba(5,24,42,.72),rgba(4,13,27,.68));box-shadow:inset 0 0 22px rgba(71,185,222,.055),0 0 0 1px rgba(75,174,211,.06);overflow:hidden}
-      .flowDataField:before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0,transparent 24px,rgba(90,180,220,.045) 25px,transparent 26px)}
-      .flowDataField--sources{top:19%;height:19%}.flowDataField--feeds{top:42%;height:17%}.flowDataField--levels{top:61%;height:17%}
-      .flowFieldTag{position:absolute;top:4px;left:8px;color:#7297ac;font:600 6px "IBM Plex Mono",monospace;letter-spacing:1px;z-index:2}
-      .flowSourceRow,.flowFeedRow,.flowLevelRow{position:absolute;left:6px;right:6px;top:50%;transform:translateY(-42%);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;z-index:2}
-      .flowFeedRow,.flowLevelRow{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
-      .flowNode{height:42px;min-width:0;border:1px solid color-mix(in srgb,var(--node-color) 78%,transparent);border-radius:9px;background:linear-gradient(135deg,rgba(8,25,43,.97),rgba(4,13,26,.97));display:flex;flex-direction:column;justify-content:center;padding:5px 8px;box-shadow:inset 0 0 14px color-mix(in srgb,var(--node-color) 8%,transparent)}
-      .flowNode--small{height:34px;padding:4px 6px;border-radius:7px}
-      .flowDot{width:5px;height:5px;border-radius:50%;background:var(--node-color);margin-bottom:3px;flex:none}
-      .flowLabel{font:600 8px 'IBM Plex Mono',monospace;letter-spacing:.25px;color:#e8f7ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .flowNode b{font:7px 'IBM Plex Mono',monospace;color:var(--node-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
-      .flowNode--small .flowLabel{font-size:7px}.flowNode--small b{font-size:7px}
-      .flowSink{position:absolute;top:87%;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:7px;color:#dffffa;font:700 8px 'IBM Plex Mono',monospace;letter-spacing:.7px;z-index:1}
-      .flowSink>span{width:5px;height:5px;border-radius:50%;background:#75f5e2}
-      .flowSink small{font:7px 'IBM Plex Mono',monospace;color:#86aebc;letter-spacing:0}
-      @media(max-width:500px){.flowBody{min-height:270px;padding-inline:7px}.flowSourceRow,.flowFeedRow,.flowLevelRow{left:7px;right:7px;gap:4px}.flowNode{padding:4px 5px}.flowLabel{font-size:7px}.flowNode--small .flowLabel{font-size:6px}.flowNode b,.flowNode--small b{font-size:6px}.flowSink{gap:4px}.flowSink small{font-size:6px}}
-      .flowNode{border-color:color-mix(in srgb,var(--node-color) 92%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 20%,transparent),0 0 12px color-mix(in srgb,var(--node-color) 24%,transparent),inset 0 0 16px color-mix(in srgb,var(--node-color) 11%,transparent)}
-      .flowNode--small{box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 18%,transparent),0 0 9px color-mix(in srgb,var(--node-color) 20%,transparent),inset 0 0 12px color-mix(in srgb,var(--node-color) 10%,transparent)}
-      .flowSourceRow .flowNode,.flowFeedRow .flowNode,.flowLevelRow .flowNode{outline:1px solid color-mix(in srgb,var(--node-color) 35%,transparent);outline-offset:1px}
-      .flowSourceRow .flowNode{height:36px;padding:4px 5px;border-radius:7px;background:linear-gradient(135deg,rgba(8,25,43,.99),rgba(4,13,26,.99));box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 22%,transparent),0 0 13px color-mix(in srgb,var(--node-color) 27%,transparent),inset 0 0 16px color-mix(in srgb,var(--node-color) 12%,transparent)}
-      .flowFeedRow .flowNode,.flowLevelRow .flowNode{height:30px;padding:3px 4px;border-radius:6px;background:linear-gradient(135deg,rgba(8,25,43,.99),rgba(4,13,26,.99));box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 20%,transparent),0 0 10px color-mix(in srgb,var(--node-color) 23%,transparent),inset 0 0 12px color-mix(in srgb,var(--node-color) 10%,transparent)}
-      .flowLabel,.flowNode b{position:relative;z-index:2}.flowSourceRow .flowLabel{font-size:6.5px;letter-spacing:0}.flowSourceRow .flowNode b{font-size:6.5px}.flowNode--small .flowLabel{font-size:6.2px;letter-spacing:0}.flowNode--small b{font-size:6.3px;margin-top:2px}.flowDot{width:4px;height:4px;margin-bottom:2px}
-      .flowCore{width:max-content;max-width:calc(100% - 28px);height:30px;margin:9px auto 0;padding:0 14px;border:1px solid rgba(117,245,226,.78);border-radius:8px;background:linear-gradient(135deg,rgba(7,34,48,.98),rgba(4,17,31,.98));box-shadow:0 0 0 1px rgba(117,245,226,.16),0 0 13px rgba(117,245,226,.22),inset 0 0 13px rgba(117,245,226,.09);white-space:nowrap}
-      .flowDataField--sources{top:19%;height:19%}.flowDataField--feeds{top:42%;height:17%}.flowDataField--levels{top:61%;height:17%}
-      .flowSourceRow{left:6px;right:6px;gap:4px}.flowFeedRow,.flowLevelRow{left:6px;right:6px;gap:4px}
-      .flowSink{top:81%;left:50%;right:auto;transform:translateX(-50%);width:max-content;max-width:calc(100% - 12px);min-height:22px;padding:3px 7px;gap:4px;border:1px solid rgba(117,245,226,.7);border-radius:7px;background:linear-gradient(135deg,rgba(7,34,48,.98),rgba(4,17,31,.98));box-shadow:0 0 0 1px rgba(117,245,226,.14),0 0 11px rgba(117,245,226,.18),inset 0 0 12px rgba(117,245,226,.08);white-space:nowrap}
-      .flowSink small{white-space:nowrap}
-      @media(max-width:500px){.flowBody{padding-inline:5px}.flowCore{height:25px;margin-top:5px;padding-inline:7px;font-size:7px}.flowDataField{left:5px;right:5px;border-radius:7px}.flowDataField--sources{top:19%;height:19%}.flowDataField--feeds{top:42%;height:17%}.flowDataField--levels{top:61%;height:17%}.flowFieldTag{font-size:5.4px;left:6px}.flowSourceRow,.flowFeedRow,.flowLevelRow{left:4px;right:4px;gap:3px}.flowSourceRow .flowLabel,.flowSourceRow .flowNode b{font-size:5.8px}.flowNode--small .flowLabel,.flowNode--small b{font-size:5.8px}.flowSink{top:81%;gap:3px;padding:3px 5px;max-width:calc(100% - 8px)}.flowSink small{font-size:5.6px}}
-      @media(prefers-reduced-motion:reduce){.flowWires animate{display:none}}
-    `}
-      /* Individual framed data cards: no shared row containers */
-      .flowSourceRow,.flowFeedRow,.flowLevelRow{position:absolute;left:8px;right:8px;display:grid;align-items:center;transform:none;top:auto;gap:6px;z-index:2}
-      .flowSourceRow{top:22%;grid-template-columns:repeat(3,minmax(0,1fr))}
-      .flowFeedRow{top:45%;grid-template-columns:repeat(4,minmax(0,1fr))}
-      .flowLevelRow{top:64%;grid-template-columns:repeat(4,minmax(0,1fr))}
-      .flowDataField{display:none}
-      .flowNode{box-sizing:border-box;width:100%;height:43px;min-width:0;padding:4px 6px;border-width:1px;border-style:solid;border-color:var(--node-color)!important;border-radius:7px;background:linear-gradient(145deg,color-mix(in srgb,var(--node-color) 16%,#071729),rgba(3,11,24,.98))!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 25%,transparent),0 0 12px color-mix(in srgb,var(--node-color) 22%,transparent),inset 0 0 12px color-mix(in srgb,var(--node-color) 10%,transparent)!important;overflow:hidden}
-      .flowNode--small{height:37px;padding:3px 5px}
-      .flowLabel,.flowNode b{display:block;width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:0}
-      .flowLabel{font-size:clamp(5px,.65vw,8px)!important}
-      .flowNode b{font-size:clamp(5px,.62vw,7px)!important}
-      .flowSourceRow .flowNode:nth-child(3n+1),.flowFeedRow .flowNode:nth-child(4n+1),.flowLevelRow .flowNode:nth-child(4n+1){--node-color:#55f2c4!important}
-      .flowSourceRow .flowNode:nth-child(3n+2),.flowFeedRow .flowNode:nth-child(4n+2),.flowLevelRow .flowNode:nth-child(4n+2){--node-color:#ffc86b!important}
-      .flowSourceRow .flowNode:nth-child(3n+3),.flowFeedRow .flowNode:nth-child(4n+3),.flowLevelRow .flowNode:nth-child(4n+3){--node-color:#79aaff!important}
-      .flowFeedRow .flowNode:nth-child(4n),.flowLevelRow .flowNode:nth-child(4n){--node-color:#c69bff!important}
-      .flowSink{z-index:3}
-      @media(max-width:500px){
-        .flowSourceRow,.flowFeedRow,.flowLevelRow{left:5px;right:5px;gap:3px}
-        .flowSourceRow .flowNode{height:38px;padding:3px 4px}
-        .flowFeedRow .flowNode,.flowLevelRow .flowNode{height:34px;padding:3px 4px}
-        .flowLabel{font-size:clamp(5px,1.35vw,6.5px)!important}
-        .flowNode b{font-size:clamp(5px,1.3vw,6px)!important}
-      }
-    </style>
-  </section>;
 }
