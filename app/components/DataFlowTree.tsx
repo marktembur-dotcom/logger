@@ -24,10 +24,16 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
 
   const connector = (d: string, color: string, delay = 0) => (
     <g key={d}>
-      <path d={d} fill="none" stroke={color} strokeOpacity=".28" strokeWidth="1.4" />
-      <path d={d} fill="none" stroke={color} strokeOpacity=".95" strokeWidth="1.7" strokeDasharray="3 17" strokeLinecap="round">
-        <animate attributeName="stroke-dashoffset" from="0" to="-40" dur="2.8s" begin={`${delay}s`} repeatCount="indefinite" />
+      <path d={d} fill="none" stroke={color} strokeOpacity=".18" strokeWidth="2.8" />
+      <path d={d} fill="none" stroke={color} strokeOpacity=".42" strokeWidth="3.8" strokeDasharray="1 30" strokeLinecap="round" filter="url(#flowEnergyGlow)">
+        <animate attributeName="stroke-dashoffset" from="0" to="-62" dur="2.1s" begin={`${delay}s`} repeatCount="indefinite" />
       </path>
+      <path d={d} fill="none" stroke={color} strokeOpacity=".98" strokeWidth="1.6" strokeDasharray="7 31" strokeLinecap="round">
+        <animate attributeName="stroke-dashoffset" from="38" to="-38" dur="2.7s" begin={`${delay}s`} repeatCount="indefinite" />
+      </path>
+      <circle r="2.1" fill={color} filter="url(#flowEnergyGlow)">
+        <animateMotion path={d} dur="3.4s" begin={`${delay}s`} repeatCount="indefinite" rotate="auto" />
+      </circle>
     </g>
   );
 
@@ -47,6 +53,12 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
     <div className="treeBody flowBody">
       <div className="flowCore"><span className="coreRing" /><b>GC COMMAND CORE</b></div>
       <svg className="flowWires" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <filter id="flowEnergyGlow" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="2.4" result="softGlow" />
+            <feMerge><feMergeNode in="softGlow" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
         {connector("M500 24 V62", "#75f5e2")}
         {connector("M500 62 C500 80 170 74 170 104", "#55f2c4", .2)}
         {connector("M500 62 V104", "#ffc86b", .55)}
@@ -72,6 +84,9 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
       .flowCore{height:49px;display:flex;align-items:center;justify-content:center;gap:9px;position:relative;z-index:2;color:#eafffb;font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.8px}
       .coreRing{width:9px;height:9px;border-radius:50%;background:#75f5e2;box-shadow:0 0 0 4px rgba(117,245,226,.10);flex:none}
       .flowWires{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+      .flowWires path{vector-effect:non-scaling-stroke}
+      .flowWires circle{opacity:.95}
+      @media(prefers-reduced-motion:reduce){.flowWires animate,.flowWires circle{display:none}}
       .flowSourceRow,.flowFeedRow,.flowLevelRow{position:absolute;left:12px;right:12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;z-index:1}
       .flowSourceRow{top:24%;}.flowFeedRow{top:51%;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
       .flowLevelRow{top:69%;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
