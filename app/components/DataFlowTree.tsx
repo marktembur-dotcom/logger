@@ -80,7 +80,7 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
     </div>
     <style jsx>{`
       .treeWrap--flow{overflow:hidden}
-      .flowBody{position:relative;min-height:300px;padding:0 12px 10px;overflow:hidden;background:radial-gradient(ellipse at 50% 38%,rgba(35,120,155,.14),transparent 58%),linear-gradient(180deg,rgba(5,17,34,.4),rgba(3,10,21,.96))}
+      .flowBody{position:relative;min-height:0;height:100%;padding:0 8px 4px;overflow:hidden;background:radial-gradient(ellipse at 50% 38%,rgba(35,120,155,.14),transparent 58%),linear-gradient(180deg,rgba(5,17,34,.4),rgba(3,10,21,.96))}
       .flowCore{height:49px;display:flex;align-items:center;justify-content:center;gap:9px;position:relative;z-index:2;color:#eafffb;font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.8px}
       .coreRing{width:9px;height:9px;border-radius:50%;background:#75f5e2;box-shadow:0 0 0 4px rgba(117,245,226,.10);flex:none}
       .flowWires{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
@@ -103,16 +103,16 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
       .flowNode{border-color:color-mix(in srgb,var(--node-color) 92%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 20%,transparent),0 0 12px color-mix(in srgb,var(--node-color) 24%,transparent),inset 0 0 16px color-mix(in srgb,var(--node-color) 11%,transparent)}
       .flowNode--small{box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 18%,transparent),0 0 9px color-mix(in srgb,var(--node-color) 20%,transparent),inset 0 0 12px color-mix(in srgb,var(--node-color) 10%,transparent)}
       .flowSourceRow .flowNode,.flowFeedRow .flowNode,.flowLevelRow .flowNode{outline:1px solid color-mix(in srgb,var(--node-color) 35%,transparent);outline-offset:1px}
-      .flowSourceRow .flowNode{height:42px;border-radius:9px;background:linear-gradient(135deg,rgba(8,25,43,.99),rgba(4,13,26,.99));box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 22%,transparent),0 0 13px color-mix(in srgb,var(--node-color) 27%,transparent),inset 0 0 16px color-mix(in srgb,var(--node-color) 12%,transparent)}
-      .flowFeedRow .flowNode,.flowLevelRow .flowNode{height:34px;border-radius:7px;background:linear-gradient(135deg,rgba(8,25,43,.99),rgba(4,13,26,.99));box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 20%,transparent),0 0 10px color-mix(in srgb,var(--node-color) 23%,transparent),inset 0 0 12px color-mix(in srgb,var(--node-color) 10%,transparent)}
-      .flowLabel,.flowNode b{position:relative;z-index:2}
+      .flowSourceRow .flowNode{height:36px;padding:4px 5px;border-radius:7px;background:linear-gradient(135deg,rgba(8,25,43,.99),rgba(4,13,26,.99));box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 22%,transparent),0 0 13px color-mix(in srgb,var(--node-color) 27%,transparent),inset 0 0 16px color-mix(in srgb,var(--node-color) 12%,transparent)}
+      .flowFeedRow .flowNode,.flowLevelRow .flowNode{height:30px;padding:3px 4px;border-radius:6px;background:linear-gradient(135deg,rgba(8,25,43,.99),rgba(4,13,26,.99));box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 20%,transparent),0 0 10px color-mix(in srgb,var(--node-color) 23%,transparent),inset 0 0 12px color-mix(in srgb,var(--node-color) 10%,transparent)}
+      .flowLabel,.flowNode b{position:relative;z-index:2}.flowSourceRow .flowLabel{font-size:6.5px;letter-spacing:0}.flowSourceRow .flowNode b{font-size:6.5px}.flowNode--small .flowLabel{font-size:6.2px;letter-spacing:0}.flowNode--small b{font-size:6.3px;margin-top:2px}.flowDot{width:4px;height:4px;margin-bottom:2px}
       .flowCore{width:max-content;max-width:calc(100% - 28px);height:30px;margin:9px auto 0;padding:0 14px;border:1px solid rgba(117,245,226,.78);border-radius:8px;background:linear-gradient(135deg,rgba(7,34,48,.98),rgba(4,17,31,.98));box-shadow:0 0 0 1px rgba(117,245,226,.16),0 0 13px rgba(117,245,226,.22),inset 0 0 13px rgba(117,245,226,.09);white-space:nowrap}
-      .flowSourceRow{top:23%}
-      .flowFeedRow{top:49%}
-      .flowLevelRow{top:68%}
-      .flowSink{top:85%;left:50%;right:auto;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);min-height:25px;padding:5px 11px;border:1px solid rgba(117,245,226,.7);border-radius:7px;background:linear-gradient(135deg,rgba(7,34,48,.98),rgba(4,17,31,.98));box-shadow:0 0 0 1px rgba(117,245,226,.14),0 0 11px rgba(117,245,226,.18),inset 0 0 12px rgba(117,245,226,.08);white-space:nowrap}
+      .flowSourceRow{top:21%;left:8px;right:8px;gap:4px}
+      .flowFeedRow{top:44%;left:8px;right:8px;gap:4px}
+      .flowLevelRow{top:63%;left:8px;right:8px;gap:4px}
+      .flowSink{top:81%;left:50%;right:auto;transform:translateX(-50%);width:max-content;max-width:calc(100% - 12px);min-height:22px;padding:3px 7px;gap:4px;border:1px solid rgba(117,245,226,.7);border-radius:7px;background:linear-gradient(135deg,rgba(7,34,48,.98),rgba(4,17,31,.98));box-shadow:0 0 0 1px rgba(117,245,226,.14),0 0 11px rgba(117,245,226,.18),inset 0 0 12px rgba(117,245,226,.08);white-space:nowrap}
       .flowSink small{white-space:nowrap}
-      @media(max-width:500px){.flowCore{height:27px;margin-top:7px;padding-inline:9px;font-size:8px}.flowSourceRow{top:23%}.flowFeedRow{top:49%}.flowLevelRow{top:68%}.flowSink{top:85%;gap:4px;padding:4px 6px;max-width:calc(100% - 10px)}.flowSink small{font-size:6px}}
+      @media(max-width:500px){.flowBody{padding-inline:5px}.flowCore{height:25px;margin-top:5px;padding-inline:7px;font-size:7px}.flowSourceRow{top:21%;left:5px;right:5px;gap:3px}.flowFeedRow{top:44%;left:5px;right:5px;gap:3px}.flowLevelRow{top:63%;left:5px;right:5px;gap:3px}.flowSourceRow .flowLabel,.flowSourceRow .flowNode b{font-size:5.8px}.flowNode--small .flowLabel,.flowNode--small b{font-size:5.8px}.flowSink{top:81%;gap:3px;padding:3px 5px;max-width:calc(100% - 8px)}.flowSink small{font-size:5.6px}}
       @media(prefers-reduced-motion:reduce){.flowWires animate{display:none}}
     `}</style>
   </section>;
