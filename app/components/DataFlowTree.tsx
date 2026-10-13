@@ -73,9 +73,9 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
         {connector("M875 240 V270 H500", "#55f2c4", 1.2)}
         {connector("M500 270 V310", "#75f5e2", .35)}
       </svg>
-      <div className="flowSourceRow">{model.sources.map(s => card(s.label, s.value, s.color))}</div>
-      <div className="flowFeedRow">{model.feeds.map(f => card(f.label, f.value, f.color, true))}</div>
-      <div className="flowLevelRow">{model.levels.map(l => card(l.label, l.value, l.color, true))}</div>
+      <div className="flowDataField flowDataField--sources"><div className="flowFieldTag">SOURCE NODES</div><div className="flowSourceRow">{model.sources.map(s => card(s.label, s.value, s.color))}</div></div>
+      <div className="flowDataField flowDataField--feeds"><div className="flowFieldTag">SIGNAL STREAM</div><div className="flowFeedRow">{model.feeds.map(f => card(f.label, f.value, f.color, true))}</div></div>
+      <div className="flowDataField flowDataField--levels"><div className="flowFieldTag">QUALIFIED LEVELS</div><div className="flowLevelRow">{model.levels.map(l => card(l.label, l.value, l.color, true))}</div></div>
       <div className="flowSink"><span />GOLD LAB <small>{eventCount} EVENTS / {levels.length} ZONES</small></div>
     </div>
     <style jsx>{`
@@ -87,9 +87,12 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
       .flowWires path{vector-effect:non-scaling-stroke}
       .flowWires circle{opacity:.95}
       @media(prefers-reduced-motion:reduce){.flowWires animate,.flowWires circle{display:none}}
-      .flowSourceRow,.flowFeedRow,.flowLevelRow{position:absolute;left:12px;right:12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;z-index:1}
-      .flowSourceRow{top:24%;}.flowFeedRow{top:51%;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
-      .flowLevelRow{top:69%;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+      .flowDataField{position:absolute;left:8px;right:8px;z-index:1;border:1px solid rgba(99,190,220,.34);border-radius:10px;background:linear-gradient(135deg,rgba(5,24,42,.72),rgba(4,13,27,.68));box-shadow:inset 0 0 22px rgba(71,185,222,.055),0 0 0 1px rgba(75,174,211,.06);overflow:hidden}
+      .flowDataField:before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0,transparent 24px,rgba(90,180,220,.045) 25px,transparent 26px)}
+      .flowDataField--sources{top:19%;height:19%}.flowDataField--feeds{top:42%;height:17%}.flowDataField--levels{top:61%;height:17%}
+      .flowFieldTag{position:absolute;top:4px;left:8px;color:#7297ac;font:600 6px "IBM Plex Mono",monospace;letter-spacing:1px;z-index:2}
+      .flowSourceRow,.flowFeedRow,.flowLevelRow{position:absolute;left:6px;right:6px;top:50%;transform:translateY(-42%);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;z-index:2}
+      .flowFeedRow,.flowLevelRow{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
       .flowNode{height:42px;min-width:0;border:1px solid color-mix(in srgb,var(--node-color) 78%,transparent);border-radius:9px;background:linear-gradient(135deg,rgba(8,25,43,.97),rgba(4,13,26,.97));display:flex;flex-direction:column;justify-content:center;padding:5px 8px;box-shadow:inset 0 0 14px color-mix(in srgb,var(--node-color) 8%,transparent)}
       .flowNode--small{height:34px;padding:4px 6px;border-radius:7px}
       .flowDot{width:5px;height:5px;border-radius:50%;background:var(--node-color);margin-bottom:3px;flex:none}
@@ -107,12 +110,11 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
       .flowFeedRow .flowNode,.flowLevelRow .flowNode{height:30px;padding:3px 4px;border-radius:6px;background:linear-gradient(135deg,rgba(8,25,43,.99),rgba(4,13,26,.99));box-shadow:0 0 0 1px color-mix(in srgb,var(--node-color) 20%,transparent),0 0 10px color-mix(in srgb,var(--node-color) 23%,transparent),inset 0 0 12px color-mix(in srgb,var(--node-color) 10%,transparent)}
       .flowLabel,.flowNode b{position:relative;z-index:2}.flowSourceRow .flowLabel{font-size:6.5px;letter-spacing:0}.flowSourceRow .flowNode b{font-size:6.5px}.flowNode--small .flowLabel{font-size:6.2px;letter-spacing:0}.flowNode--small b{font-size:6.3px;margin-top:2px}.flowDot{width:4px;height:4px;margin-bottom:2px}
       .flowCore{width:max-content;max-width:calc(100% - 28px);height:30px;margin:9px auto 0;padding:0 14px;border:1px solid rgba(117,245,226,.78);border-radius:8px;background:linear-gradient(135deg,rgba(7,34,48,.98),rgba(4,17,31,.98));box-shadow:0 0 0 1px rgba(117,245,226,.16),0 0 13px rgba(117,245,226,.22),inset 0 0 13px rgba(117,245,226,.09);white-space:nowrap}
-      .flowSourceRow{top:21%;left:8px;right:8px;gap:4px}
-      .flowFeedRow{top:44%;left:8px;right:8px;gap:4px}
-      .flowLevelRow{top:63%;left:8px;right:8px;gap:4px}
+      .flowDataField--sources{top:19%;height:19%}.flowDataField--feeds{top:42%;height:17%}.flowDataField--levels{top:61%;height:17%}
+      .flowSourceRow{left:6px;right:6px;gap:4px}.flowFeedRow,.flowLevelRow{left:6px;right:6px;gap:4px}
       .flowSink{top:81%;left:50%;right:auto;transform:translateX(-50%);width:max-content;max-width:calc(100% - 12px);min-height:22px;padding:3px 7px;gap:4px;border:1px solid rgba(117,245,226,.7);border-radius:7px;background:linear-gradient(135deg,rgba(7,34,48,.98),rgba(4,17,31,.98));box-shadow:0 0 0 1px rgba(117,245,226,.14),0 0 11px rgba(117,245,226,.18),inset 0 0 12px rgba(117,245,226,.08);white-space:nowrap}
       .flowSink small{white-space:nowrap}
-      @media(max-width:500px){.flowBody{padding-inline:5px}.flowCore{height:25px;margin-top:5px;padding-inline:7px;font-size:7px}.flowSourceRow{top:21%;left:5px;right:5px;gap:3px}.flowFeedRow{top:44%;left:5px;right:5px;gap:3px}.flowLevelRow{top:63%;left:5px;right:5px;gap:3px}.flowSourceRow .flowLabel,.flowSourceRow .flowNode b{font-size:5.8px}.flowNode--small .flowLabel,.flowNode--small b{font-size:5.8px}.flowSink{top:81%;gap:3px;padding:3px 5px;max-width:calc(100% - 8px)}.flowSink small{font-size:5.6px}}
+      @media(max-width:500px){.flowBody{padding-inline:5px}.flowCore{height:25px;margin-top:5px;padding-inline:7px;font-size:7px}.flowDataField{left:5px;right:5px;border-radius:7px}.flowDataField--sources{top:19%;height:19%}.flowDataField--feeds{top:42%;height:17%}.flowDataField--levels{top:61%;height:17%}.flowFieldTag{font-size:5.4px;left:6px}.flowSourceRow,.flowFeedRow,.flowLevelRow{left:4px;right:4px;gap:3px}.flowSourceRow .flowLabel,.flowSourceRow .flowNode b{font-size:5.8px}.flowNode--small .flowLabel,.flowNode--small b{font-size:5.8px}.flowSink{top:81%;gap:3px;padding:3px 5px;max-width:calc(100% - 8px)}.flowSink small{font-size:5.6px}}
       @media(prefers-reduced-motion:reduce){.flowWires animate{display:none}}
     `}</style>
   </section>;
