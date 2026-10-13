@@ -73,9 +73,9 @@ export default function DataFlowTree({ feeds, levels, eventCount, csvLive, price
         {connector("M875 240 V270 H500", "#55f2c4", 1.2)}
         {connector("M500 270 V310", "#75f5e2", .35)}
       </svg>
-      <div className="flowDataField flowDataField--sources"><div className="flowFieldTag">SOURCE NODES</div><div className="flowSourceRow">{model.sources.map(s => card(s.label, s.value, s.color))}</div></div>
-      <div className="flowDataField flowDataField--feeds"><div className="flowFieldTag">SIGNAL STREAM</div><div className="flowFeedRow">{model.feeds.map(f => card(f.label, f.value, f.color, true))}</div></div>
-      <div className="flowDataField flowDataField--levels"><div className="flowFieldTag">QUALIFIED LEVELS</div><div className="flowLevelRow">{model.levels.map(l => card(l.label, l.value, l.color, true))}</div></div>
+      <div className="flowSourceRow">{model.sources.map(s => card(s.label, s.value, s.color))}</div>
+      <div className="flowFeedRow">{model.feeds.map((f, i) => card(f.label, f.value, ["#55f2c4", "#ffc86b", "#79aaff", "#c69bff"][i % 4], true))}</div>
+      <div className="flowLevelRow">{model.levels.map((l, i) => card(l.label, l.value, l.color === "#ff7b9c" ? l.color : ["#55f2c4", "#79aaff", "#ffc86b", "#c69bff"][i % 4], true))}</div>
       <div className="flowSink"><span />GOLD LAB <small>{eventCount} EVENTS / {levels.length} ZONES</small></div>
     </div>
     <style jsx>{`
